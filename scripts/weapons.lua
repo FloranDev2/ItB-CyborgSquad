@@ -6,10 +6,9 @@ local path = mod_loader.mods[modApi.currentMod].resourcePath
 local iconPath = path .."img/weapons/"
 
 local files = {
-	"tatu_gastropod_attack.png",
-	"tatu_starfish_attack.png",
-	"tatu_plasmodia_attack.png",
-	"tatu_spore_attack.png"
+	"truelch_scorpion_attack.png",
+	"truelch_bouncer_attack.png",
+	"truelch_burrower_attack.png"
 }
 
 -- iterate our files and add the assets so the game can find them.
@@ -17,100 +16,52 @@ for _, file in ipairs(files) do
 	modApi:appendAsset("img/weapons/".. file, iconPath .. file)
 end
 
--- functions
-local function tatu_hash(point) return point.x + point.y*10 end
 
-local function tatu_pos(p1,p2)
-	if p1.y > p2.y and p1.x > p2.x then
-		return 3
-	elseif p1.y < p2.y and p1.x > p2.x then
-		return 2
-	elseif p1.y < p2.y and p1.x < p2.x then
-		return 1
-	elseif p1.y > p2.y and p1.x < p2.x then
-		return 0
-	end
-end
-
-------------------
--- Razor Radula --
-------------------
-
-tatu_GastropodAttack = Skill:new{
-	Name = "Razor Radula",
-	Description = "Use a damaging grapple to pull yourself towards objects, or units to you.",
+truelch_ScorpionAttack = Skill:new{
+	--Infos
+	Name = "Entangling Spinneret",
+	Description = "Target an adjacent enemy, and move it with the Mech, damaging it",
 	Class = "TechnoVek",
+
+	--Shop
 	Rarity = 1,
-	Icon = "weapons/tatu_gastropod_attack.png",	
-	Explosion = "",
-	Damage = 1,
 	PowerCost = 0,
-	Upgrades = 2,
-	UpgradeCost = {1,2},
-	ChooseEnd = false,
-	LaunchSound = "/enemy/burnbug_2/attack_launch",
-	PullSound = "/enemy/burnbug_2/attack_pull",
+	Upgrades = 2, --2
+	UpgradeCost = {}, --{2,2}
+
+	--Gameplay
+	Damage = 1,
 	ZoneTargeting = ZONE_DIR,
+
+	--Art
+	Icon = "weapons/truelch_scorpion_attack.png",
+	LaunchSound = "/enemy/burnbug_2/attack_launch",
+
+	--Tip image
 	TipImage = {
 		Unit = Point(2,3),
-		Enemy = Point(2,0),
-		Target = Point(2,1),
-		Second_Origin = Point(2,3),
-		Second_Target = Point(1,3),
-		Mountain = Point(0,3),
-		CustomPawn = "tatu_GastropodMech",
 	}
 }
 
-Weapon_Texts.tatu_GastropodAttack_Upgrade1 = "Controlled Pull"
-Weapon_Texts.tatu_GastropodAttack_Upgrade2 = "+2 Damage"
+Weapon_Texts.truelch_ScorpionAttack_Upgrade1 = "Extended spinneret"
+Weapon_Texts.truelch_ScorpionAttack_Upgrade2 = "+1 Damage"
 
-tatu_GastropodAttack_A = tatu_GastropodAttack:new{
-	UpgradeDescription = "Pull to any tile between you and the target.",
-	ChooseEnd = true
+truelch_ScorpionAttack_A = truelch_ScorpionAttack:new{
+	UpgradeDescription = "Can target any adjacent target.",
 }
 
-tatu_GastropodAttack_B = tatu_GastropodAttack:new{
-	UpgradeDescription = "Increases damage by 2.",
-	Damage = 3,
+truelch_ScorpionAttack_B = truelch_ScorpionAttack:new{
+	UpgradeDescription = "Increases damage by 1.",
+	Damage = 2,
 }
 
-tatu_GastropodAttack_AB = tatu_GastropodAttack:new{
-	Damage = 3,
-	ChooseEnd = true
+truelch_ScorpionAttack_AB = truelch_ScorpionAttack:new{
+	Damage = 2,
 }
 
-function tatu_GastropodAttack:GetSkillEffect(p1,p2)
+function truelch_ScorpionAttack:GetSkillEffect(p1,p2)
 	local ret = SkillEffect()
-	local direction = GetDirection(p2 - p1)
-	local target = GetProjectileEnd(p1,p2,PATH_PROJECTILE)
-	
-	local damage = SpaceDamage(target)
-	damage.bHidePath = true
-	ret:AddProjectile(damage,"effects/shot_grapple")
-	
-	damage = SpaceDamage(target, self.Damage)
-	damage.sSound = self.PullSound
-	ret:AddDamage(damage)
-	
-	local endTarget = p1 + DIR_VECTORS[direction]
-	local endSelf = target - DIR_VECTORS[direction]
-	if self.ChooseEnd then
-		if p2 ~= target then
-			endTarget = p2
-			endSelf = p2
-		elseif p2 ~= p1 + DIR_VECTORS[direction] then
-			endTarget = p2 - DIR_VECTORS[direction]
-			endSelf = p2 - DIR_VECTORS[direction]
-		end
-	end
-	
-	if not Board:IsValid(target) or (Board:IsPawnSpace(target) and not Board:GetPawn(target):IsGuarding()) then  -- If it's a pawn
-		ret:AddCharge(Board:GetSimplePath(target, endTarget), FULL_DELAY)
-	elseif Board:IsBlocked(target, PATH_PROJECTILE) then  --If it's an obstruction
-		ret:AddCharge(Board:GetSimplePath(p1, endSelf), FULL_DELAY)	
-	end
-	
+		
 	return ret
 end
 

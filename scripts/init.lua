@@ -12,22 +12,33 @@ local mod = {
 }
 
 function mod:init()
+	--Assets
+	require(self.scriptPath.."assets")
+
+	--Misc
 	--require(self.scriptPath .."achievements")
-	require(self.scriptPath .."weapons")
+
+	--Weapons
+	--require(self.scriptPath .."weapons")
+	require(self.scriptPath.."/weapons/scorpion_attack")
+	require(self.scriptPath.."/weapons/bouncer_attack")
+	require(self.scriptPath.."/weapons/burrower_attack")
+
+	--Pawns
 	require(self.scriptPath .."pawns")
 end
 
 function mod:load(options, version)
 	modApi:addSquad(
 		{
-			id = "tatu_Advanced_Squad",
-			"Advanced Squad",
+			id = "truelch_Cyborg_Squad",
+			"Truelch's Cyborg Squad",
 			"truelch_ScorpionMech",
-			"tatu_GastropodMech",
-			"tatu_StarfishMech",
+			"truelch_BouncerMech",
+			"truelch_BurrowerMech",
 		},
-		"Advanced Squad",
-		"Our scientists were so preoccupied with whether they could, they didn't stop to think if they should.",
+		"Truelch's Cyborg Squad",
+		"Ah yes, more Cyborgs. Go BRRRT.",
 		self.resourcePath .."img/icon.png"
 	)
 end

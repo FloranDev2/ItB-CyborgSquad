@@ -1,8 +1,8 @@
 -- add color palette
 local pathScripts = mod_loader.mods[modApi.currentMod].scriptPath
 modApi:addPalette({
-		ID = "tatu_AdvancedColors",
-		Name = "Advanced Squad",
+		ID = "truelch_CyborgsColor",
+		Name = "Truelch's Cyborgs' Color",
 		PlateHighlight = {255, 198, 138},	--lights
 		PlateLight     = {243, 94, 222},	--main highlight
 		PlateMid       = {133, 55, 152},	--main light
@@ -12,7 +12,7 @@ modApi:addPalette({
 		BodyColor      = {255, 95, 75},		--metal mid
 		BodyHighlight  = {255, 187, 131},	--metal light
 })
-local palette = modApi:getPaletteImageOffset("tatu_AdvancedColors")
+local palette = modApi:getPaletteImageOffset("truelch_CyborgsColor")
 
 -- this line just gets the file path for your mod, so you can find all your files easily.
 local path = mod_loader.mods[modApi.currentMod].resourcePath
@@ -22,14 +22,14 @@ local path = mod_loader.mods[modApi.currentMod].resourcePath
 -------------------
 
 local names = {
-	"GastropodMech",
-	"StarfishMech",
-	"PlasmodiaMech",
+	"ScorpionMech",
+	"BouncerMech",
+	"BurrowerMech",
 }
 for _, ptname in pairs(names) do
-	modApi:appendAsset("img/portraits/pilots/Pilot_tatu_"..ptname..".png",path.."img/portraits/Pilot_tatu_"..ptname..".png")
+	modApi:appendAsset("img/portraits/pilots/Pilot_truelch_"..ptname..".png",path.."img/portraits/Pilot_truelch_"..ptname..".png")
 	CreatePilot{
-		Id = "Pilot_tatu_"..ptname,
+		Id = "Pilot_truelch_"..ptname,
 		Personality = "Vek",
 		Sex = SEX_VEK,
 		Rarity = 0,
@@ -38,43 +38,38 @@ for _, ptname in pairs(names) do
 	}
 end
 
-modApi:appendAsset("img/portraits/enemy/tatu_Spore.png",path.."img/portraits/tatu_Spore.png")
-modApi:appendAsset("img/portraits/enemy/tatu_Spore_A.png",path.."img/portraits/tatu_Spore.png")
-modApi:appendAsset("img/portraits/enemy/tatu_Spore_B.png",path.."img/portraits/tatu_Spore.png")
-modApi:appendAsset("img/portraits/enemy/tatu_Spore_AB.png",path.."img/portraits/tatu_Spore.png")
-
 --------------------
--- Gastropod Mech ---
+-- Scorpion Mech ---
 --------------------
 
 -- locate our mech assets.
-local gastropodPath = path .."img/mech_gastropod/"
+local scorpionPath = path .."img/mech_scorpion/"
 
 -- make a list of our files.
 local files = {
-	"tatu_mech_gastropod.png",
-	"tatu_mech_gastropod_a.png",
-	"tatu_mech_gastropod_w.png",
-	"tatu_mech_gastropod_broken.png",
-	"tatu_mech_gastropod_w_broken.png",
-	"tatu_mech_gastropod_ns.png",
-	"tatu_mech_gastropod_h.png"
+	"truelch_mech_scorpion.png",
+	"truelch_mech_scorpion_a.png",
+	"truelch_mech_scorpion_w.png",
+	"truelch_mech_scorpion_broken.png",
+	"truelch_mech_scorpion_w_broken.png",
+	"truelch_mech_scorpion_ns.png",
+	"truelch_mech_scorpion_h.png"
 }
 
 -- iterate our files and add the assets so the game can find them.
 for _, file in ipairs(files) do
-	modApi:appendAsset("img/units/player/".. file, gastropodPath .. file)
+	modApi:appendAsset("img/units/player/".. file, scorpionPath .. file)
 end
 
 -- create animations for our mech with our imported files.
 -- note how the animations starts searching from /img/
 local a = ANIMS
-a.tatu_mech_gastropod =				a.MechUnit:new{Image = "units/player/tatu_mech_gastropod.png", PosX = -23, PosY = 1 }
-a.tatu_mech_gastropoda =			a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_a.png", PosX = -23, PosY = 1, NumFrames = 4 }
-a.tatu_mech_gastropodw =			a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_w.png", PosX = -21, PosY = 10 }
-a.tatu_mech_gastropod_broken =		a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_broken.png", PosX = -23, PosY = 1 }
-a.tatu_mech_gastropodw_broken =		a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_w_broken.png", PosX = -21, PosY = 10 }
-a.tatu_mech_gastropod_ns =			a.MechIcon:new{Image = "units/player/tatu_mech_gastropod_ns.png"}
+a.truelch_mech_scorpion =			a.MechUnit:new{Image = "units/player/tatu_mech_gastropod.png", PosX = -23, PosY = 1 }
+a.truelch_mech_scorpiona =			a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_a.png", PosX = -23, PosY = 1, NumFrames = 4 }
+a.truelch_mech_scorpionw =			a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_w.png", PosX = -21, PosY = 10 }
+a.truelch_mech_scorpion_broken =	a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_broken.png", PosX = -23, PosY = 1 }
+a.truelch_mech_scorpionw_broken =	a.MechUnit:new{Image = "units/player/tatu_mech_gastropod_w_broken.png", PosX = -21, PosY = 10 }
+a.truelch_mech_scorpion_ns =		a.MechIcon:new{Image = "units/player/tatu_mech_gastropod_ns.png"}
 
 tatu_GastropodMech = Pawn:new {
 	Name = "Techno-Gastropod",

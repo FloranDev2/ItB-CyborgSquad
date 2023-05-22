@@ -3,6 +3,7 @@ truelch_BouncerAttack = Skill:new{
 	Name = "Entangling Spinneret",
 	Description = "Target an adjacent enemy, and move it with the Mech, damaging it",
 	Class = "TechnoVek",
+	Icon = "weapons/truelch_bouncer_attack.png",
 
 	--Shop
 	Rarity = 1,
@@ -36,8 +37,8 @@ function truelch_BouncerAttack:GetTargetArea(point)
 	return ret
 end
 
-Weapon_Texts.truelch_ScorpionAttack_Upgrade1 = "Sweeping horns"
-Weapon_Texts.truelch_ScorpionAttack_Upgrade2 = "Reinforced carapace"
+Weapon_Texts.truelch_BouncerAttack_Upgrade1 = "Sweeping horns"
+Weapon_Texts.truelch_BouncerAttack_Upgrade2 = "Reinforced carapace"
 
 truelch_BouncerAttack_A = truelch_BouncerAttack:new{
 	UpgradeDescription = "Can target any adjacent target.",

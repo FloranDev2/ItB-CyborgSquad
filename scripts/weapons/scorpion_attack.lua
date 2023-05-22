@@ -3,6 +3,7 @@ truelch_ScorpionAttack = Skill:new{
 	Name = "Entangling Spinneret",
 	Description = "Target an adjacent enemy, and move it with the Mech, damaging it",
 	Class = "TechnoVek",
+	Icon = "weapons/truelch_scorpion_attack.png",
 
 	--Shop
 	Rarity = 1,
@@ -15,7 +16,6 @@ truelch_ScorpionAttack = Skill:new{
 	ZoneTargeting = ZONE_DIR,
 
 	--Art
-	Icon = "weapons/truelch_scorpion_attack.png",
 	--LaunchSound = "/enemy/burnbug_2/attack_launch",
 
 	--Tip image
@@ -40,8 +40,21 @@ truelch_ScorpionAttack_AB = truelch_ScorpionAttack:new{
 	Damage = 2,
 }
 
+function truelch_ScorpionAttack:GetTargetArea(point)
+	local ret = PointList()
+	
+	for dir = DIR_START, DIR_END do
+		local curr = Point(point + DIR_VECTORS[dir])
+		ret:push_back(curr)
+	end
+	
+	return ret
+end
+
 function truelch_ScorpionAttack:GetSkillEffect(p1,p2)
 	local ret = SkillEffect()
 		
+
+
 	return ret
 end

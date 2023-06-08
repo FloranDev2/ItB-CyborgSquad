@@ -111,10 +111,10 @@ end
 -- create animations for our mech with our imported files.
 -- note how the animations starts searching from /img/
 local a = ANIMS
-a.truelch_mech_bouncer =         a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer.png",          PosX = -25, PosY = -2 }
-a.truelch_mech_bouncera =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_a.png",        PosX = -25, PosY = -2, NumFrames = 4 }
+a.truelch_mech_bouncer =         a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer.png",          PosX = -23, PosY = -10 }
+a.truelch_mech_bouncera =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_a.png",        PosX = -23, PosY = -10, NumFrames = 4 }
 a.truelch_mech_bouncerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w.png",        PosX = -23, PosY = 9  }
-a.truelch_mech_bouncer_broken =	 a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_broken.png",   PosX = -25, PosY = -2 }
+a.truelch_mech_bouncer_broken =	 a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_broken.png",   PosX = -23, PosY = -10 }
 a.truelch_mech_bouncerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w_broken.png", PosX = -23, PosY = 9  }
 a.truelch_mech_bouncer_ns =      a.MechIcon:new{ Image = "units/player/truelch_mech_bouncer_ns.png"}
 

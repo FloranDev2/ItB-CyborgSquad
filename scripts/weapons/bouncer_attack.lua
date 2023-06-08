@@ -15,6 +15,7 @@ truelch_BouncerAttack = Skill:new{
 	TwoClick = true,
 
 	--Gameplay
+	Damage = 1, --if there's no pawn on the end tile
 	SelfDamage = 1,
 	Armored = false,
 	Range = 2,
@@ -91,29 +92,53 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1,p2)
 	
 	for i = 1, self.Range do
 		local curr = p2 + DIR_VECTORS[direction]*i
-		if Board:IsValid(curr) and not Board:IsBlocked(curr, PATH_FLYER) then
-			ret:push_back(curr)
-		end
+		--if Board:IsValid(curr) and not Board:IsBlocked(curr, PATH_FLYER) then
+		ret:push_back(curr)
+		--end
 	end
 	
 	return ret
 end
 
-function truelch_BouncerAttack:GetFinalEffect(p1,p2,p3)
-	local ret = SkillEffect()	
+function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
+	local ret = SkillEffect()
+
+	local pawn1 = Board:GetPawn(p2)
+	local pawn2 = Board:GetPawn(p3)
+
+	local dmg1 = self.Damage
+	if pawn2 ~= nil then
+		dmg1 = pawn2:GetHealth()
+		if pawn2:IsArmor() then
+			dmg1 = dmg1 + 1
+		end
+	end
+
+	local dmg2 = pawn1
+	if pawn1 ~= nil then
+		dmg2 = pawn1:GetHealth()
+		if pawn1:IsArmor() then
+			dmg2 = dmg2 + 1
+		end
+	end
+
+	--damage to target (we do that before so both pawns aren't in the same pos)
+	local spaceDamage2 = SpaceDamage(p3, dmg2)
+	ret:AddDamage(SpaceDamage(p3, dmg2))
 	
-	local damage = SpaceDamage(p2,0)
-	damage.sImageMark = "advanced/combat/throw_"..GetDirection(p2-p1)..".png"
-	ret:AddMelee(p1, damage)
-	ret:AddBounce(p1,3)
-	ret:AddBounce(p2,-4)
+	local spaceDamage1 = SpaceDamage(p2, 0)
+	spaceDamage1.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
+	ret:AddMelee(p1, spaceDamage1)
+	ret:AddBounce(p1, 3)
+	ret:AddBounce(p2, -4)
 	local move = PointList()
 	move:push_back(p2)
 	move:push_back(p3)
-	ret:AddLeap(move,FULL_DELAY)
-	ret:AddDamage(SpaceDamage(p3,self.Damage))
-	ret:AddBurst(p3,"Emitter_Crack_Start2",DIR_NONE)
-	ret:AddBounce(p3,4)
+	ret:AddLeap(move, FULL_DELAY)
+	--ret:AddDamage(SpaceDamage(p3, self.Damage))
+	ret:AddDamage(SpaceDamage(p3, dmg1))
+	ret:AddBurst(p3, "Emitter_Crack_Start2", DIR_NONE)
+	ret:AddBounce(p3, 4)
 
 	return ret
 end

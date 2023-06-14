@@ -19,6 +19,16 @@ truelch_BouncerAttack = Skill:new{
 	SelfDamage = 1,
 	Armored = false,
 	Range = 2,
+
+	--Tip Image
+	TipImage = {
+		Unit = Point(2,3),
+		Enemy = Point(2,2),
+		Enemy2 = Point(2,0),
+		Target = Point(2,2),
+		Second_Click = Point(2,0),
+		CustomPawn = "truelch_BouncerMech"
+	}
 }
 
 --I might consider not targetting empty spaces

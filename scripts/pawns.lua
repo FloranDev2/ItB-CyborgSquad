@@ -64,12 +64,12 @@ end
 -- create animations for our mech with our imported files.
 -- note how the animations starts searching from /img/
 local a = ANIMS
-a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion.png",          PosX = -23, PosY = 1  }
-a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -23, PosY = 1, NumFrames = 4 }
-a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -21, PosY = 10 }
-a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -23, PosY = 1  }
-a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -21, PosY = 10 }
-a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png"}
+a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion.png",          PosX = -19, PosY = -12 }
+a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -19, PosY = -12, NumFrames = 4 }
+a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = 3 }
+a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -19, PosY = -12 }
+a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -17, PosY = 3 }
+a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png", }
 
 truelch_ScorpionMech = Pawn:new {
 	Name = "Techno-Scorpion",

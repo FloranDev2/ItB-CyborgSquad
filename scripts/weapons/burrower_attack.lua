@@ -27,6 +27,7 @@ truelch_BurrowerAttack = Skill:new{
 	--Tip image
 	TipImage = {
 		Unit = Point(2,3),
+		CustomPawn = "truelch_BurrowerMech"
 	}
 }
 

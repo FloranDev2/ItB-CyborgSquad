@@ -1,16 +1,14 @@
 local mod = modApi:getCurrentMod()
-local squad = "tatu_Advanced_Squad"
+local squad = "truelch_Cyborg_Squad"
+
+--[[
+Ideas:
+- VekBall: launch Vek 4 time on a Leader in a single mission.
+- Skarner / Family Gathering: 
+]]
 
 -- Add Achievements
 local achievements = {
-	-- tatu_Hooked = modApi.achievements:add{
-		-- id = "tatu_Hooked",
-		-- name = "Hooked",
-		-- tooltip = "Pull an enemy trough 7 tiles with the Razor Radula.",
-		-- image = mod.resourcePath.."img/achievements/tatu_Hooked.png",
-		-- objective = 1,
-		-- squad = squad,
-	-- },
 	tatu_Avatar = modApi.achievements:add{
 		id = "tatu_Avatar",
 		name = "Avatar",

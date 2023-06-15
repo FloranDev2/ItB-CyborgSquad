@@ -1,5 +1,5 @@
 local mod = {
-	id = "truelch_CyborgSquad",
+	id = "truelch_Cyborg_Squad",
 	name = "Truelch's Cyborgs",
 	icon = "img/icon.png",
 	version = "1.0",

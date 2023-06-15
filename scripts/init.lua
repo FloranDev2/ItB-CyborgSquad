@@ -19,7 +19,6 @@ function mod:init()
 	--require(self.scriptPath .."achievements")
 
 	--Weapons
-	--require(self.scriptPath .."weapons")
 	require(self.scriptPath.."/weapons/scorpion_attack")
 	require(self.scriptPath.."/weapons/bouncer_attack")
 	require(self.scriptPath.."/weapons/burrower_attack")

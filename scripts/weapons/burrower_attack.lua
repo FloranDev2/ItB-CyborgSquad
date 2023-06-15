@@ -27,6 +27,10 @@ truelch_BurrowerAttack = Skill:new{
 	--Tip image
 	TipImage = {
 		Unit = Point(2,3),
+		Enemy = Point(2,2),
+		Enemy2 = Point(1,2),
+		Enemy2 = Point(3,2),
+		Target = Point(2,2),
 		CustomPawn = "truelch_BurrowerMech"
 	}
 }
@@ -70,13 +74,13 @@ function truelch_BurrowerAttack:GetSkillEffect(p1,p2)
 	ret:AddDamage(dmg1)
 
 	--Right
-	local dir2 = DIR_VECTORS[(direction + 1)% 4]
-	local dmg2 = SpaceDamage(p2 + dir2, 0, dir2)
+	local dir2 = (direction - 1)% 4
+	local dmg2 = SpaceDamage(p2 + DIR_VECTORS[dir2], 0, dir2)
 	ret:AddDamage(dmg2)
 
 	--Left
-	local dir3 = DIR_VECTORS[(direction + 1)% 4]
-	local dmg3 = SpaceDamage(p2 + dir3, 0, dir3)
+	local dir3 = (direction + 1)% 4
+	local dmg3 = SpaceDamage(p2 + DIR_VECTORS[dir3], 0, dir3)
 	ret:AddDamage(dmg3)
 
 	return ret

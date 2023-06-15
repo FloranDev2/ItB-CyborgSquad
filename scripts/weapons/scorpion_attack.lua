@@ -28,6 +28,9 @@ truelch_ScorpionAttack = Skill:new{
 		Target = Point(2,2),
 		Enemy = Point(2,2),
 		Second_Click = Point(3,1),
+
+
+
 		CustomPawn = "truelch_ScorpionMech"
 	},
 }

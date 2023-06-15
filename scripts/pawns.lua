@@ -66,20 +66,10 @@ end
 local a = ANIMS
 a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion.png",          PosX = -19, PosY = -12 }
 a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -24, PosY = -9, NumFrames = 4 }
-a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = 3 }
+a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = -7 }
 a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -19, PosY = -12 }
-a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -17, PosY = 3 }
+a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -17, PosY = -7 }
 a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png", }
-
---[[
-local a = ANIMS
-a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion.png",          PosX = -19, PosY = -12 }
-a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -19, PosY = -12, NumFrames = 4 }
-a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = 3 }
-a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -19, PosY = -12 }
-a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -17, PosY = 3 }
-a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png", }
-]]
 
 truelch_ScorpionMech = Pawn:new {
 	Name = "Techno-Scorpion",
@@ -123,9 +113,9 @@ end
 local a = ANIMS
 a.truelch_mech_bouncer =         a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer.png",          PosX = -23, PosY = -10 }
 a.truelch_mech_bouncera =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_a.png",        PosX = -23, PosY = -10, NumFrames = 4 }
-a.truelch_mech_bouncerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w.png",        PosX = -23, PosY = 9  }
+a.truelch_mech_bouncerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w.png",        PosX = -19, PosY = -5 }
 a.truelch_mech_bouncer_broken =	 a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_broken.png",   PosX = -23, PosY = -10 }
-a.truelch_mech_bouncerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w_broken.png", PosX = -23, PosY = 9  }
+a.truelch_mech_bouncerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_bouncer_w_broken.png", PosX = -19, PosY = -5 }
 a.truelch_mech_bouncer_ns =      a.MechIcon:new{ Image = "units/player/truelch_mech_bouncer_ns.png"}
 
 truelch_BouncerMech = Pawn:new {
@@ -157,7 +147,8 @@ local files = {
 	"truelch_mech_burrower_broken.png",
 	"truelch_mech_burrower_w_broken.png",
 	"truelch_mech_burrower_ns.png",
-	"truelch_mech_burrower_h.png"
+	"truelch_mech_burrower_h.png",
+	"truelch_mech_burrower_emerge.png"
 }
 
 -- iterate our files and add the assets so the game can find them.
@@ -168,12 +159,13 @@ end
 -- create animations for our mech with our imported files.
 -- note how the animations starts searching from /img/
 local a = ANIMS
-a.truelch_mech_burrower =         a.MechUnit:new{ Image = "units/player/truelch_mech_burrower.png",          PosX = -26, PosY = -9 }
-a.truelch_mech_burrowera =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_a.png",        PosX = -26, PosY = -9, NumFrames = 4 }
+a.truelch_mech_burrower =         a.MechUnit:new{ Image = "units/player/truelch_mech_burrower.png",          PosX = -18, PosY = -7 }
+a.truelch_mech_burrowera =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_a.png",        PosX = -18, PosY = -7, NumFrames = 4 }
 a.truelch_mech_burrowerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w.png",        PosX = -15, PosY =  4 }
-a.truelch_mech_burrower_broken =  a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_broken.png",   PosX = -26, PosY = -9 }
+a.truelch_mech_burrower_broken =  a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_broken.png",   PosX = -18, PosY = -7 }
 a.truelch_mech_burrowerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w_broken.png", PosX = -15, PosY =  4 }
 a.truelch_mech_burrower_ns =      a.MechIcon:new{ Image = "units/player/truelch_mech_burrower_ns.png"}
+a.truelch_mech_burrowere =        a.MechIcon:new{ Image = "units/player/truelch_mech_burrower_emerge.png", PosX = -18, PosY = -7, Loop = false, NumFrames = 10, Time = .07}
 
 truelch_BurrowerMech = Pawn:new {
 	Name = "Techno-Burrower",

@@ -5,6 +5,10 @@ truelch_BouncerAttack = Skill:new{
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_bouncer_attack.png",
 
+	--Bouncer
+	LaunchSound = "",
+	SoundBase = "/enemy/bouncer_1",
+
 	--Shop
 	Rarity = 1,
 	PowerCost = 0,
@@ -118,54 +122,65 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1,p2)
 	return ret
 end
 
+
+--[[
+Bugs:
+- When you launch a little enemy (1 HP) on a big enemy (3 HP), the big enemy will take whole damage.
+  The other way around works properly though.
+]]
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()
 
-	local pawn1 = Board:GetPawn(p2)
-	local pawn2 = Board:GetPawn(p3)
+	local pawn2 = Board:GetPawn(p2)
+	local pawn3 = Board:GetPawn(p3)
 
 	local selfDamage = 0
 
-	local dmg1 = self.Damage
-	if pawn2 ~= nil then
-		dmg1 = pawn2:GetHealth()
-		if pawn2:IsArmor() then
-			dmg1 = dmg1 + 1
+	local dmg2 = self.Damage
+	if pawn3 ~= nil then
+		dmg2 = pawn3:GetHealth()
+		if pawn3:IsArmor() then
+			dmg2 = dmg2 + 1
 		end
 
 		--Self damage
 		selfDamage = self.SelfDamage
 	end
 
-	local dmg2 = pawn1
-	if pawn1 ~= nil then
-		dmg2 = pawn1:GetHealth()
-		if pawn1:IsArmor() then
-			dmg2 = dmg2 + 1
+	local dmg3 = pawn2
+	if pawn2 ~= nil then
+		dmg3 = pawn2:GetHealth()
+		if pawn2:IsArmor() then
+			dmg3 = dmg3 + 1
 		end
 	end	
 
 	--Self push + self damage
-	--local selfDam = SpaceDamage(p1, selfDamage, GetDirection(p1 - p2))
-	--ret:AddDamage(selfDam)
+	local dirback = GetDirection(p1 - p2)
+	local selfDam = SpaceDamage(p1, 0, dirback)
+	selfDam.sAnimation = "airpush_"..dirback
+	ret:AddDamage(selfDam)
 
-	if pawn2 ~= nil then
+	if pawn3 ~= nil then
 		--Throw at enemy
-		--damage to target (we do that before so both pawns aren't in the same pos)
-		local spaceDamage2 = SpaceDamage(p3, dmg2)
-		ret:AddDamage(SpaceDamage(p3, dmg2))
-		
-		local spaceDamage1 = SpaceDamage(p2, 0)
-		spaceDamage1.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
-		ret:AddMelee(p1, spaceDamage1)
+	
+		--P2 damage
+		local spaceDamage2 = SpaceDamage(p2, 0)
+		spaceDamage2.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
+		--ret:AddMelee(p1, spaceDamage1)
+		ret:AddDamage(spaceDamage2) --works better
 		ret:AddBounce(p1, 3)
 		ret:AddBounce(p2, -4)
+
+		--Move
 		local move = PointList()
 		move:push_back(p2)
 		move:push_back(p3)
 		ret:AddLeap(move, FULL_DELAY)
+
+		--P3 damage
 		--ret:AddDamage(SpaceDamage(p3, self.Damage))
-		ret:AddDamage(SpaceDamage(p3, dmg1))
+		ret:AddDamage(SpaceDamage(p3, dmg3)) --works better
 		ret:AddBurst(p3, "Emitter_Crack_Start2", DIR_NONE)
 		ret:AddBounce(p3, 4)
 	else
@@ -173,12 +188,10 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 		local direction = GetDirection(p2 - p1)
 		local spaceDamage = SpaceDamage(p2, self.Damage, direction)
 		spaceDamage.sAnimation = "SwipeClaw2"
-		ret:AddMelee(p2 - DIR_VECTORS[direction], spaceDamage)
+		spaceDamage.sSound = self.SoundBase.."/attack"
+		--ret:AddMelee(p2 - DIR_VECTORS[direction], spaceDamage)
+		ret:AddDamage(spaceDamage) --works better
 	end
-
-	--Self push + self damage
-	local selfDam = SpaceDamage(p1, selfDamage, GetDirection(p1 - p2))
-	ret:AddDamage(selfDam)
 
 	return ret
 end

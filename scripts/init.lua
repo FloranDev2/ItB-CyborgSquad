@@ -12,6 +12,9 @@ local mod = {
 }
 
 function mod:init()
+	--Libs
+	require(self.scriptPath.."/libs/customAnim")
+
 	--Assets
 	require(self.scriptPath.."assets")
 

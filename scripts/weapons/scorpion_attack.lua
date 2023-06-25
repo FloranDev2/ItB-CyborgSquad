@@ -1,4 +1,55 @@
---------------------------------------------------- GENERIC UTILITY ---------------------------------------------------
+--------------------------------------------------- IMPORTS
+local mod = mod_loader.mods[modApi.currentMod]
+local scriptPath = mod.scriptPath
+local customAnim = require(scriptPath.."/libs/customAnim")
+--LOG("\n\ncustomAnim: "..tostring(customAnim))
+
+local weaponArmed = require(scriptPath.."/libs/weaponArmed")
+--LOG("\n\nweaponArmed: "..tostring(weaponArmed))
+
+
+
+--------------------------------------------------- ANIMS
+local a = ANIMS
+
+--ANIMS.LAYER_BACK
+--ANIMS.LAYER_FRONT
+--ANIMS.LAYER_LESS_BACK
+--ANIMS.LAYER_FLOOR
+
+--34x23
+a.truelch_hold_front = Animation:new {
+	Image = "effects/hold_front.png",
+	--Image = "combat/icons/movearrow_u.png", --just to test
+	NumFrames = 1,
+	Time = 0.19,
+	PosX = -17,
+	PosY = 12,
+	Loop = true,
+	Layer = ANIMS.LAYER_FRONT,
+}
+
+--34x23
+a.truelch_hold_back = Animation:new {
+	Image = "effects/hold_back.png",
+	NumFrames = 1,
+	Time = 0.19,
+	PosX = -17,
+	PosY = 12,
+	Loop = true,
+	Layer = ANIMS.LAYER_BACK,
+}
+
+--Maybe I'll add some fade in / out, but that sounds like a pain in the butt
+--[[
+local function addHold(point)
+end
+
+local function removeHold(point)
+end
+]]
+
+--------------------------------------------------- GENERIC UTILITY
 
 local function isGame()
 	return true
@@ -16,24 +67,92 @@ local function missionData()
     return mission.truelch_Cyborg_Squad
 end
 
---------------------------------------------------- CUSTOM UTILITY ---------------------------------------------------
 
-local path = {}
 
-local function debugPointList()
-	local str = "debugPointList() - Point list (count: " .. tostring(#path) .. "): "
-    for _,v in pairs(path) do
+--------------------------------------------------- Phase 1: add / remove targets
+--Phase 1: add / remove targets
+local targets = {}
+
+-- -1 is like returning false, otherwise, return the index (to remove)
+local function containTarget(pawn)
+    for index, target in pairs(targets) do
+    	if pawn:GetId() == target:GetId() then
+        	return index --"true"
+        end
+    end
+    return -1 --"false"
+end
+
+local function computeTarget(point) --p2
+	local pawn = Board:GetPawn(point)
+	if pawn ~= nil then
+		local index = containTarget(pawn) -- -1 => "false" / else => true
+		if index == -1 then
+			--does not contain -> we add it
+			table.insert(targets, pawn)
+			customAnim:add(point, "truelch_hold_back")
+			customAnim:add(point, "truelch_hold_front")
+			--LOG("add at: " .. point:GetString())
+		else
+			--contains -> we remove it
+			table.remove(targets, index)
+			customAnim:rem(point, "truelch_hold_back")
+			customAnim:rem(point, "truelch_hold_front")
+			--LOG("rem at: " .. point:GetString())
+		end
+	end
+end
+
+--[[
+local function onWeaponArmed(weapon, pawnId)
+	LOGF("Pawn id %s armed weapon %s", tostring(pawnId), tostring(weapon.__Id))
+end
+
+weaponArmed.events.onWeaponArmed:subscribe(onWeaponArmed)
+]]
+
+local function onWeaponUnarmed(weapon, pawnId)
+	--LOGF("Pawn id %s unarmed weapon %s", tostring(pawnId), tostring(weapon.__Id))
+
+	if targets == nil then
+		--LOG("return")
+		return
+	end
+
+	--Clear animations
+    for index, target in pairs(targets) do
+    	local point = target:GetSpace()
+		customAnim:rem(point, "truelch_hold_back")
+		customAnim:rem(point, "truelch_hold_front")
+		--LOG("clear at: "..point:GetString())
+    end
+
+	--Clear targets
+	targets = {}
+end
+
+weaponArmed.events.onWeaponUnarmed:subscribe(onWeaponUnarmed)
+
+
+
+--------------------------------------------------- Phase 2: move targets
+local pathOffsets = {}
+
+local function debugPathOffsets()
+	local str = "debugPointList() - Path Offsets list (count: " .. tostring(#pathOffsets) .. "):"
+    for _,v in pairs(pathOffsets) do
         str = str .. "\n" .. v:GetString()
     end
     LOG(str)
 end
 
-local function getLastPathPoint(origin)
-    local lastPathPoint = origin
-    if #path > 0 then
-        lastPathPoint = path[#path]
+local function isPointAlreadyInTheList(p)
+    for _, offset in pairs(pathOffsets) do
+        if offset == p then
+        	return true
+        end
     end
-    return lastPathPoint
+    return false
 end
 
 local function isAdjacentTile(origin, p)
@@ -46,106 +165,38 @@ local function isAdjacentTile(origin, p)
     return lastPathPoint:Manhattan(p) == 1
 end
 
-local function isScorpionWeapon(weapon)--1234567890123456789012
-    return string.sub(weapon, 1, 22) == "truelch_ScorpionAttack"
+--[[
+local function isPosOk(point)
+	return not Board:IsBlocked(point, PATH_PROJECTILE)
+end
+]]
+
+--start pos mean the start of each pos of pawns affected by the weapons - including the player himself
+local function isStartPosOk(point)
+	return not Board:IsBlocked(point, PATH_PROJECTILE) and isAdjacentTile() and not isPointAlreadyInTheList(p)
 end
 
-local function isPointAlreadyInTheList(p)
-    for _, pathPoint in pairs(path) do
-        if pathPoint == p then
-        	return true
-        end
-    end
-    return false
-end
 
---I don't know if I can clone the list without using the same reference in lua, so I'll do that manually...
-local function trimPath(p)
-	--Step1: create a clone list
-	local clonedpath = {}
-    for _, pathPoint in pairs(path) do
-    	table.insert(clonedpath, pathPoint)
-    end
+local function tryAddOffset(mechPos, offset)
+	local isOk = true
+	--Okay for targeted?
+	for _, target in pairs(targets) do
+		local curr = target:GetSpace() + offset
+		isOk = isOk and isStartPosOk(curr)
+	end
 
-	--Step2: clean path
-	path = {}
+	--Also need to be ok for player
+	isOk = isOk and isStartPosOk(mechPos)
 
-	--Step3: add points to path until we find p (included)
-    for _, pathPoint in pairs(clonedpath) do
-    	table.insert(path, pathPoint)
-    	if pathPoint == p then
-    		--LOG("We found p -> BREAK!")
-    		break
-    	end
-    end
-end
-
---Making it truelch_RotaryCannon: make p == nil for some reason
-local function computeAddPoint(origin, p, maxLength)
-    if p == nil then
-        return
-    end
-
-    if path == nil then
-        path = {}
-    end
-
-    if isPointAlreadyInTheList(p) then
-        --TRIM
-        trimPath(p)
-    elseif isAdjacentTile(origin, p) and #path < maxLength then
-        table.insert(path, p)
-    end
-end
-
---------------------------------------------------- TEST ---------------------------------------------------
---Phase 1: add / remove targets
-local targets = {}
-
--- -1 is like returning false, otherwise, return the index (to remove)
-local function containTarget(pawn)
-	--LOG("containTarget")
-    for index, target in pairs(targets) do
-    	--[[
-    	LOG("index: " .. tostring(index))
-    	LOG("type(pawn): " .. type(pawn))
-    	LOG("type(target): " .. type(target))
-    	LOG("pawn pos: " .. pawn:GetSpace():GetString())
-    	LOG("target pos: " .. target:GetSpace():GetString())
-    	]]
-        --if pawn == target then --causes an error
-    	if pawn:GetId() == target:GetId() then
-        	--LOG("-> return true")
-        	--return true
-        	return index
-        end
-    end
-    --LOG("-> return false")
-    --return false
-    return -1
-end
-
-local function computeTarget(point) --p2
-	local pawn = Board:GetPawn(point)
-	if pawn ~= nil then
-		local index = containTarget(pawn) -- -1 => "false" / else => true
-		if index == -1 then
-			--does not contain -> we add it
-			--LOG("contains target -> ADD")
-			table.insert(targets, pawn)
-
-		else
-			--LOG("contains target -> REMOVE (todo)")
-			--contains -> we remove it
-			table.remove(targets, index)
-		end
-		--LOG("targets size: " .. tostring(#targets))
+	--If ok -> let's go
+	if isOk then
+		table.insert(pathOffsets, offset)
 	end
 end
 
 
 
---------------------------------------------------- WEAPON ---------------------------------------------------
+--------------------------------------------------- WEAPON
 
 truelch_ScorpionAttack = Skill:new{
 	--Infos
@@ -274,11 +325,25 @@ function truelch_ScorpionAttack:GetSkillEffect(p1, p2)
     	local targetPos = target:GetSpace()
     	LOG("targetPos: " .. targetPos:GetString())
     	local damage = SpaceDamage(targetPos, 0)
-    	damage.sImageMark = "combat/icons/icon_mind_glow.png"
+    	--damage.sImageMark = "combat/icons/icon_mind_glow.png"
     	ret:AddDamage(damage)
     end
 
-	--return	
 	return ret
 end
 
+
+
+-- TWO CLICKS
+
+
+
+
+function truelch_FighterStrafe:GetFinalEffect(p1, p2, p3)
+	local ret = SkillEffect()
+	local direction = GetDirection(p3 - p2)
+
+	
+
+	return ret
+end

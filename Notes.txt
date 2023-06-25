@@ -5,7 +5,8 @@ The trait is on the pilots.lua file iirc
 
 CustomAnim: simple example
 Unfair tweaks by arro -> nano mech's weapon
-
+-> https://discord.com/channels/417639520507527189/434468424173748224/1121185805025681478
 
 Move:
 https://discord.com/channels/417639520507527189/1062451817918767134/1118976718393311315
+

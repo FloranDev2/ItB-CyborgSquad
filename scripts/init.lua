@@ -14,6 +14,7 @@ local mod = {
 function mod:init()
 	--Libs
 	require(self.scriptPath.."/libs/customAnim")
+	require(self.scriptPath.."/libs/weaponArmed")
 
 	--Assets
 	require(self.scriptPath.."assets")
@@ -31,6 +32,7 @@ function mod:init()
 end
 
 function mod:load(options, version)
+	--require(self.scriptPath .."weaponPreview/api"):load() --old, taken from NN
 	modApi:addSquad(
 		{
 			id = "truelch_Cyborg_Squad",

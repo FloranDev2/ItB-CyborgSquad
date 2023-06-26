@@ -79,3 +79,134 @@ local function computeAddPoint(origin, p, maxLength)
         table.insert(path, p)
     end
 end
+
+
+
+--------------------------------------------------- OLD
+--[[
+I was wrong, we don't want an area covering the targets.
+We want something like the fighter strafe: starting from the mech and change the area from the latest point added,
+excluding points we already have
+]]
+function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
+    local ret = PointList() 
+    
+    --[[
+    for i = 0, 3 do
+        local curr = p1 + DIR_VECTORS[i]
+        ret:push_back(curr)
+    end
+    ]]
+
+    LOG("GetSecondTargetArea - A (add targets)")
+
+    --Add targets
+    local tmpList = {}
+    --Reminder: targets are pawns and not points!
+    for _, target in pairs(targets) do
+        LOG(" -> target: " .. target:GetSpace():GetString())
+        table.insert(tmpList, target:GetSpace())
+        LOG("  ok, now try add adjacents:")
+        --Add adjacents
+        for dir = 0, 3 do
+            LOG("   -> dir: " .. tostring(dir))
+            local adj = target:GetSpace() + DIR_VECTORS[dir]
+            LOG("   -> adj: " .. adj:GetString())
+            if not isPointAlreadyInTheList(tmpList, adj) then
+                table.insert(tmpList, adj)
+                LOG("  ---> added!")
+            end
+        end
+    end
+
+    LOG("GetSecondTargetArea - B (convert to point list)")
+
+    --Convert to point list
+    for _, point in pairs(tmpList) do
+        ret:push_back(point)
+    end
+
+    --Try add offset --> no, move that to (final) effect
+    --tryAddOffset(p2)
+
+    LOG("GetSecondTargetArea - C (return)")
+    
+    --Return
+    return ret
+end
+
+
+function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
+    local ret = SkillEffect()
+    local direction = GetDirection(p3 - p2)
+
+
+    --Not sure where to put that
+    previousOffset = p3 - previousPoint
+    previousPoint = p3
+
+    --Try add offset --> hope that works
+    tryAddOffset(p1, p3)
+
+    LOG("GetFinalEffect - C")
+
+    --Test - that works!
+    --[[
+    pathOffsets = {}
+    table.insert(pathOffsets, Point(1, 0))
+    table.insert(pathOffsets, Point(2, 0))
+    ]]
+
+    --Apply move to enemies
+    for i, target in pairs(targets) do
+        local move = PointList()
+        move:push_back(target:GetSpace())
+        for j, offset in pairs(pathOffsets) do
+            local curr = target:GetSpace() + offset
+            move:push_back(curr)
+        end
+        ret:AddMove(move, FULL_DELAY)
+    end
+
+    --Apply move to self
+    local move = PointList()
+    move:push_back(Board:GetPawn(p1):GetSpace())
+    for j, offset in pairs(pathOffsets) do
+        local curr = p1 + offset
+        move:push_back(curr)
+    end
+    ret:AddMove(move, FULL_DELAY)
+
+    --Test
+
+
+    --Ret
+    return ret
+end
+
+
+local function tryAddOffset(p1, p3)
+    local offset = p3 - p1
+    local isOk = true
+
+    --Check if not already in the list! (new)
+    if isPointAlreadyInTheList(pathOffsets, offset)
+
+    --Okay for targeted?
+    for _, target in pairs(targets) do
+        local curr = target:GetSpace() + offset
+        isOk = isOk and isStartPosOk(curr)
+    end
+
+    --Also need to be ok for player
+    isOk = isOk and isStartPosOk(p1)
+
+    --If ok -> let's go
+    if isOk then
+        table.insert(pathOffsets, offset)
+
+        --Test
+        previousPoint = p3
+        previousOffset = offset
+    end
+end

@@ -2,11 +2,7 @@
 local mod = mod_loader.mods[modApi.currentMod]
 local scriptPath = mod.scriptPath
 local customAnim = require(scriptPath.."/libs/customAnim")
---LOG("\n\ncustomAnim: "..tostring(customAnim))
-
 local weaponArmed = require(scriptPath.."/libs/weaponArmed")
---LOG("\n\nweaponArmed: "..tostring(weaponArmed))
-
 
 
 --------------------------------------------------- ANIMS
@@ -50,7 +46,6 @@ end
 ]]
 
 --------------------------------------------------- GENERIC UTILITY
-
 local function isGame()
 	return true
 		and Game ~= nil
@@ -77,6 +72,36 @@ local function isPointAlreadyInTheList(list, p)
     return false
 end
 
+local function clear()
+	LOG("\nclear()\n")
+	--Clear anims
+	--is it the original pos?
+	--[[
+    for index, target in pairs(targets) do
+    	local curr = 
+    end
+    ]]
+
+    --Fuck it, i'll just clear the whole board
+    for j = 0, 7 do
+    	for i = 0, 7 do
+    		local curr = Point(i, j)
+			customAnim:rem(curr, "truelch_hold_back")
+			customAnim:rem(curr, "truelch_hold_front")
+    	end
+    end
+
+	--Clear offsets and targets
+	pathOffsets = {}
+	targets = {}
+
+	--Other clear
+	previousPoint = nil
+	previousOffset = nil
+end
+
+
+
 
 --------------------------------------------------- Phase 1: add / remove targets
 --Phase 1: add / remove targets
@@ -92,21 +117,27 @@ local function containTarget(pawn)
     return -1 --"false"
 end
 
-local function computeTarget(point) --p2
-	local pawn = Board:GetPawn(point)
+local function computeTarget(p1, p2)
+	--We want to have p1 in the target area so we can just click
+	--without accidentally add / remove a target to validate the first phase
+	if p1 == p2 then
+		return
+	end
+
+	local pawn = Board:GetPawn(p2)
 	if pawn ~= nil then
 		local index = containTarget(pawn) -- -1 => "false" / else => true
 		if index == -1 then
 			--does not contain -> we add it
 			table.insert(targets, pawn)
-			customAnim:add(point, "truelch_hold_back")
-			customAnim:add(point, "truelch_hold_front")
+			customAnim:add(p2, "truelch_hold_back")
+			customAnim:add(p2, "truelch_hold_front")
 			--LOG("add at: " .. point:GetString())
 		else
 			--contains -> we remove it
 			table.remove(targets, index)
-			customAnim:rem(point, "truelch_hold_back")
-			customAnim:rem(point, "truelch_hold_front")
+			customAnim:rem(p2, "truelch_hold_back")
+			customAnim:rem(p2, "truelch_hold_front")
 			--LOG("rem at: " .. point:GetString())
 		end
 	end
@@ -128,6 +159,7 @@ local function onWeaponUnarmed(weapon, pawnId)
 		return
 	end
 
+	--[[
 	--Clear animations
     for index, target in pairs(targets) do
     	local point = target:GetSpace()
@@ -138,6 +170,10 @@ local function onWeaponUnarmed(weapon, pawnId)
 
 	--Clear targets
 	targets = {}
+	]]
+
+	--new
+	clear()
 end
 
 weaponArmed.events.onWeaponUnarmed:subscribe(onWeaponUnarmed)
@@ -145,7 +181,39 @@ weaponArmed.events.onWeaponUnarmed:subscribe(onWeaponUnarmed)
 
 
 --------------------------------------------------- Phase 2: move targets
+--0         1         2
+--0123456789012345678901
+--truelch_ScorpionAttack
+local function isScorpionWeapon(weapon)
+    return string.sub(weapon, 1, 21) == "truelch_ScorpionAttack"
+end
+
+local previousPoint
+local previousOffset
+
 local pathOffsets = {}
+
+local HOOK_finalEffectEnd = function(mission, pawn, weaponId, p1, p2, p3)
+	LOG(string.format("%s has finished using %s at %s and %s!", pawn:GetMechName(), weaponId, p2:GetString(), p3:GetString()))
+	if isScorpionWeapon(weaponId) then
+		clear()
+	end
+end
+
+local function EVENT_onModsLoaded()
+	LOG("EVENT_onModsLoaded()")
+	modapiext:addFinalEffectEndHook(HOOK_finalEffectEnd)
+
+	--test
+	modApi:addTestMechEnteredHook(function(mission)
+		LOG("Player has entered the test mech scenario!")
+		clear()
+	end)
+end
+
+modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
+
+
 
 local function debugPathOffsets()
 	local str = "debugPointList() - Path Offsets list (count: " .. tostring(#pathOffsets) .. "):"
@@ -165,48 +233,74 @@ local function isPointAlreadyInTheList(p)
 end
 
 --TODO: getLastPathPoint doesn't exist
-local function isAdjacentTile(origin, p)
-    local lastPathPoint = getLastPathPoint(origin)
+local function isAdjacentTile(p1, p2)
+    return p1:Manhattan(p2) == 1
+end
 
-    if lastPathPoint == nil or p == nil then
-        LOG("lastPathPoint is nil or p is nil! (shouldn't happen)")
-        return false
+--Start pos mean the start of each pos of pawns affected by the weapons - including the player himself
+--Is the offset working from the start pos?
+--*We need to ignore the position of other affected units
+local function isOffsetFromStartPosOk(point, offset)
+	local offsettedPos = point + offset
+
+	--*
+	local isStartPos = false
+    for _, target in pairs(targets) do
+    	if target:GetSpace() == offsettedPos then
+    		LOG("\n\nHERE!!!\n\n")
+    		isStartPos = true
+    	end
     end
-    return lastPathPoint:Manhattan(p) == 1
+
+	return not Board:IsBlocked(offsettedPos, PATH_PROJECTILE) or isStartPos
 end
 
---[[
-local function isPosOk(point)
-	return not Board:IsBlocked(point, PATH_PROJECTILE)
+local function trim(offsetGoal)
+	--Step1: create a clone list
+	local clone = {}
+    for _, offset in pairs(pathOffsets) do
+    	table.insert(clone, offset)
+    end
+
+	--Step2: clean path
+	pathOffsets = {}
+
+	--Step3: add offsets to pathOffsets until we find offsetGoal (included)
+    for _, offset in pairs(clone) do
+    	table.insert(pathOffsets, offset)
+    	if offset == offsetGoal then
+    		break
+    	end
+    end
 end
-]]
 
---start pos mean the start of each pos of pawns affected by the weapons - including the player himself
-local function isStartPosOk(point)
-	return not Board:IsBlocked(point, PATH_PROJECTILE) and isAdjacentTile() and not isPointAlreadyInTheList(p)
-end
-
-
---local function tryAddOffset(mechPos, offset)
+--TODO: trim if we find an offset we already had
 local function tryAddOffset(p1, p3)
-	LOG("tryAddOffset")
-
 	local offset = p3 - p1
-
 	local isOk = true
-	--Okay for targeted?
-	for _, target in pairs(targets) do
-		local curr = target:GetSpace() + offset
-		isOk = isOk and isStartPosOk(curr)
-	end
 
-	--Also need to be ok for player
-	isOk = isOk and isStartPosOk(p1)
+	--Check if not already in the list! (new)
+	isOk = isOk and not isPointAlreadyInTheList(pathOffsets, offset)
+
+    --Okay for targeted?
+    for _, target in pairs(targets) do
+        isOk = isOk and isOffsetFromStartPosOk(target:GetSpace(), offset)
+    end
+
+    --Also need to be ok for player
+    isOk = isOk and isOffsetFromStartPosOk(p1, offset)
 
 	--If ok -> let's go
 	if isOk then
 		table.insert(pathOffsets, offset)
+
+		--Test
+		previousPoint = p3
+		previousOffset = offset
 	end
+
+	--Trim
+	trim(offset)
 end
 
 
@@ -224,15 +318,15 @@ truelch_ScorpionAttack = Skill:new{
 	Rarity = 1,
 	PowerCost = 0,
 	Upgrades = 2,
-	UpgradeCost = {2,2},
+	UpgradeCost = { 2, 2 },
 
 	--TC
 	TwoClick = true,
 
 	--Gameplay
-	Range = 1,
-	Damage = 1,
-	--ZoneTargeting = ZONE_DIR,
+	Range = 1, --radius
+	Damage = 1, --will be increased in an upgrade
+
 	--Art
 	--LaunchSound = "/enemy/burnbug_2/attack_launch",
 
@@ -241,6 +335,7 @@ truelch_ScorpionAttack = Skill:new{
 	MinTargets = 0, --1
 	--Upgrade people, upgrade!
 	MaxTargets = 4, --1
+	MaxDistance = 4, --max size of the offsets list basically
 
 	--Tip image
 	TipImage = {
@@ -303,7 +398,7 @@ end
 function truelch_ScorpionAttack:GetTargetArea(point)
 	local ret = PointList()
 
-	--ret:push_back(point) --test
+	ret:push_back(point) --test
 
 	for dir = DIR_START, DIR_END do
 		for range = 1, self.Range do
@@ -318,19 +413,24 @@ function truelch_ScorpionAttack:GetTargetArea(point)
 end
 
 function truelch_ScorpionAttack:GetSkillEffect(p1, p2)
-	--init vars
+	--Init vars
 	local ret = SkillEffect()
 
-	computeTarget(p2)
+	--Compute target
+	computeTarget(p1, p2)
 
-	--LOG("targets size: " .. tostring(#targets))
-	--iterate (target is a pawn btw)
+	--Iterate (target is a pawn btw)
     for _, target in pairs(targets) do
     	local targetPos = target:GetSpace()
     	local damage = SpaceDamage(targetPos, 0)
     	ret:AddDamage(damage)
     end
 
+    --I can reset that here in preparation for phase 2 (test!)
+    previousPoint = p1
+    previousOffset = Point(0, 0)
+
+    --Return
 	return ret
 end
 
@@ -338,45 +438,19 @@ end
 function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
 	local ret = PointList()	
 	
-	--[[
-	for i = 0, 3 do
-		local curr = p1 + DIR_VECTORS[i]
-		ret:push_back(curr)
-	end
-	]]
-
-	LOG("GetSecondTargetArea - A (add targets)")
-
-	--Add targets
-	local tmpList = {}
-	--Reminder: targets are pawns and not points!
-	for _, target in pairs(targets) do
-		LOG(" -> target: " .. target:GetSpace():GetString())
-		table.insert(tmpList, target:GetSpace())
-		LOG("  ok, now try add adjacents:")
-		--Add adjacents
-		for dir = 0, 3 do
-			LOG("   -> dir: " .. tostring(dir))
-			local adj = target:GetSpace() + DIR_VECTORS[dir]
-			LOG("   -> adj: " .. adj:GetString())
-			if not isPointAlreadyInTheList(tmpList, adj) then
-				table.insert(tmpList, adj)
-				LOG("  ---> added!")
-			end
+	--Compute
+	tmpList = {}
+	for dir = DIR_START, DIR_END do
+		local curr = previousPoint + DIR_VECTORS[dir]
+		if not isPointAlreadyInTheList() then
+			table.insert(tmpList, curr)
 		end
 	end
-
-	LOG("GetSecondTargetArea - B (convert to point list)")
 
 	--Convert to point list
 	for _, point in pairs(tmpList) do
 		ret:push_back(point)
 	end
-
-	--Try add offset --> no, move that to (final) effect
-	--tryAddOffset(p2)
-
-	LOG("GetSecondTargetArea - C (return)")
 	
 	--Return
 	return ret
@@ -384,23 +458,11 @@ end
 
 
 function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
-	LOG("GetFinalEffect - A")
 	local ret = SkillEffect()
 	local direction = GetDirection(p3 - p2)
 
-	LOG("GetFinalEffect - B")
-
-	--Try add offset --> hope that works
+	--Not sure where to put that
 	tryAddOffset(p1, p3)
-
-	LOG("GetFinalEffect - C")
-
-	--Test - that works!
-	--[[
-	pathOffsets = {}
-	table.insert(pathOffsets, Point(1, 0))
-	table.insert(pathOffsets, Point(2, 0))
-	]]
 
 	--Apply move to enemies
     for i, target in pairs(targets) do
@@ -421,9 +483,6 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
         move:push_back(curr)
     end
     ret:AddMove(move, FULL_DELAY)
-
-    --Test
-
 
     --Ret
 	return ret

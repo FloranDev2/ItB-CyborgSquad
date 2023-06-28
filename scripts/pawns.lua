@@ -179,7 +179,7 @@ truelch_BurrowerMech = Pawn:new {
 	DefaultTeam = TEAM_PLAYER,
 	ImpactMaterial = IMPACT_INSECT,
 	Massive = true,
-	Burrows = true,
+	--Burrows = true,
 	Pushable = false,
 }
 

@@ -1,3 +1,12 @@
+--[[
+Has an issue when I use the weapon with the shortcut (1)
+
+No matching overload found, candidates:
+void __add(lua_State*,Point&,Point)
+
+The issue is in GetSecondTargetArea()
+]]
+
 --------------------------------------------------- IMPORTS
 local mod = mod_loader.mods[modApi.currentMod]
 local scriptPath = mod.scriptPath
@@ -45,22 +54,13 @@ local function removeHold(point)
 end
 ]]
 
---------------------------------------------------- GENERIC UTILITY
-local function isGame()
-	return true
-		and Game ~= nil
-		and GAME ~= nil
-end
 
-local function missionData()
-    local mission = GetCurrentMission()
+--------------------------------------------------- VARS
+local targets = {}
+local previousPoint
+local previousOffset
+local pathOffsets = {}
 
-    if mission.truelch_Cyborg_Squad == nil then
-        mission.truelch_Cyborg_Squad = {}
-    end
-
-    return mission.truelch_Cyborg_Squad
-end
 
 --------------------------------------------------- MISC UTILITY
 local function isPointAlreadyInTheList(list, p)
@@ -73,15 +73,8 @@ local function isPointAlreadyInTheList(list, p)
 end
 
 local function clear()
-	LOG("\nclear()\n")
+	--LOG("\nclear()\n")
 	--Clear anims
-	--is it the original pos?
-	--[[
-    for index, target in pairs(targets) do
-    	local curr = 
-    end
-    ]]
-
     --Fuck it, i'll just clear the whole board
     for j = 0, 7 do
     	for i = 0, 7 do
@@ -101,11 +94,15 @@ local function clear()
 end
 
 
-
-
 --------------------------------------------------- Phase 1: add / remove targets
 --Phase 1: add / remove targets
-local targets = {}
+local function debugTargets()
+	local str = "debugTargets() - Path Offsets list (count: " .. tostring(#targets) .. "):"
+    for _,v in pairs(pathOffsets) do
+        str = str .. "\n" .. v:GetString()
+    end
+    LOG(str)
+end
 
 -- -1 is like returning false, otherwise, return the index (to remove)
 local function containTarget(pawn)
@@ -182,41 +179,39 @@ weaponArmed.events.onWeaponUnarmed:subscribe(onWeaponUnarmed)
 
 --------------------------------------------------- Phase 2: move targets
 --0         1         2
---0123456789012345678901
+--1234567890123456789012
 --truelch_ScorpionAttack
 local function isScorpionWeapon(weapon)
-    return string.sub(weapon, 1, 21) == "truelch_ScorpionAttack"
+	local sub = string.sub(weapon, 1, 22)
+	--LOG("sub: " .. sub)
+    return sub == "truelch_ScorpionAttack"
 end
 
-local previousPoint
-local previousOffset
-
-local pathOffsets = {}
-
 local HOOK_finalEffectEnd = function(mission, pawn, weaponId, p1, p2, p3)
-	LOG(string.format("%s has finished using %s at %s and %s!", pawn:GetMechName(), weaponId, p2:GetString(), p3:GetString()))
+	--LOG(string.format("%s has finished using %s at %s and %s!", pawn:GetMechName(), weaponId, p2:GetString(), p3:GetString()))
 	if isScorpionWeapon(weaponId) then
 		clear()
 	end
 end
 
 local function EVENT_onModsLoaded()
-	LOG("EVENT_onModsLoaded()")
+	--LOG("EVENT_onModsLoaded()")
 	modapiext:addFinalEffectEndHook(HOOK_finalEffectEnd)
 
 	--test
 	modApi:addTestMechEnteredHook(function(mission)
-		LOG("Player has entered the test mech scenario!")
+		--LOG("Player has entered the test mech scenario!")
 		clear()
 	end)
+
+	--also clear at mission start?
 end
 
 modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
 
 
-
 local function debugPathOffsets()
-	local str = "debugPointList() - Path Offsets list (count: " .. tostring(#pathOffsets) .. "):"
+	local str = "debugPathOffsets() - pathOffsets (count: " .. tostring(#pathOffsets) .. "):"
     for _,v in pairs(pathOffsets) do
         str = str .. "\n" .. v:GetString()
     end
@@ -240,16 +235,20 @@ end
 --Start pos mean the start of each pos of pawns affected by the weapons - including the player himself
 --Is the offset working from the start pos?
 --*We need to ignore the position of other affected units
-local function isOffsetFromStartPosOk(point, offset)
+local function isOffsetFromStartPosOk(playerPos, point, offset)
 	local offsettedPos = point + offset
 
 	--*
 	local isStartPos = false
     for _, target in pairs(targets) do
     	if target:GetSpace() == offsettedPos then
-    		LOG("\n\nHERE!!!\n\n")
     		isStartPos = true
     	end
+    end
+
+    --Need also to consider player's pos!
+    if playerPos == offsettedPos then
+    	isStartPos = true
     end
 
 	return not Board:IsBlocked(offsettedPos, PATH_PROJECTILE) or isStartPos
@@ -284,11 +283,11 @@ local function tryAddOffset(p1, p3)
 
     --Okay for targeted?
     for _, target in pairs(targets) do
-        isOk = isOk and isOffsetFromStartPosOk(target:GetSpace(), offset)
+        isOk = isOk and isOffsetFromStartPosOk(p1, target:GetSpace(), offset)
     end
 
     --Also need to be ok for player
-    isOk = isOk and isOffsetFromStartPosOk(p1, offset)
+    isOk = isOk and isOffsetFromStartPosOk(p1, p1, offset)
 
 	--If ok -> let's go
 	if isOk then
@@ -456,13 +455,69 @@ function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
 	return ret
 end
 
+--Teleport for each step (attempt fix 5: do like the diagonal move in KnightMiner's chess pawns)
+--Not working (yet)
+--[[
+-- add sound effect
+local pawnType = Pawn:GetType()
+ret:AddSound(_G[pawnType].SoundLocation .. "move")
+ret:AddDelay(0.1)
+]]
+function truelch_ScorpionAttack:GetFinalEffectTest(p1, p2, p3)
+	local ret = SkillEffect()
+	local direction = GetDirection(p3 - p2)
 
+	--Not sure where to put that
+	tryAddOffset(p1, p3)
+	
+	--Damage first
+    for i, target in pairs(targets) do
+    	local spaceDamage = SpaceDamage(target:GetSpace(), self.Damage)
+	    ret:AddDamage(spaceDamage)
+    end
+
+    for j, offset in pairs(pathOffsets) do
+        --Player
+        local curr = p1 + offset
+        ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", p1:GetString(), curr:GetString()))
+
+        --Enemies
+        for i, target in pairs(targets) do
+        	local curr = target:GetSpace() + offset
+        	ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", target:GetSpace():GetString(), curr:GetString()))
+        end
+
+        --Delay
+        ret:AddDelay(1)
+    end
+
+    --Ret
+	return ret
+end
+
+--[[
+Issue: when using NO_DELAY
+If I use FULL_DELAY, it works, but all the move are done one after the other.
+
+Fix attemps:
+1: teleport all pawns to their last position
+2: leap: works, but isn't thematically satisfying
+3: use flying path: shouldn't work anyway since we give a list of points in the end.
+	Plus, it wouldn't match the path the player created all the time. (shortest path vs custom path)
+4: 
+]]
 function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()
 	local direction = GetDirection(p3 - p2)
 
 	--Not sure where to put that
 	tryAddOffset(p1, p3)
+	
+	--Damage first
+    for i, target in pairs(targets) do
+    	local spaceDamage = SpaceDamage(target:GetSpace(), self.Damage)
+	    ret:AddDamage(spaceDamage)
+    end
 
 	--Apply move to enemies
     for i, target in pairs(targets) do
@@ -472,7 +527,13 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	        local curr = target:GetSpace() + offset
 	        move:push_back(curr)
 	    end
-	    ret:AddMove(move, FULL_DELAY)
+	    --ret:AddMove(move, FULL_DELAY)
+	    --ret:AddMove(move, NO_DELAY)
+	    ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+	    --ret:AddMove() --Attempt fix 3 (Pilot_Arrogant): use flying path
+	    --ret:AddCharge(move, NO_DELAY) --Attempt fix 4
+	   	--ret:AddTeleport(move, NO_DELAY) --(incorrect)
+	    --ret:AddTeleport(target:GetSpace(), target:GetSpace() + pathOffsets[#pathOffsets], NO_DELAY) --Attempt fix 5
     end
 
     --Apply move to self
@@ -482,7 +543,26 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
         local curr = p1 + offset
         move:push_back(curr)
     end
-    ret:AddMove(move, FULL_DELAY)
+    --ret:AddMove(move, FULL_DELAY)
+    --ret:AddMove(move, NO_DELAY)
+    ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+    --ret:AddMove() --Attempt fix 3 (Pilot_Arrogant): use flying path
+    --ret:AddCharge(move, NO_DELAY) --Attempt fix 4
+    --ret:AddTeleport(move, NO_DELAY) --(incorrect)
+    --ret:AddTeleport(p1, p3, NO_DELAY) --Attempt fix 5
+
+    --Attempt fix 1: teleport all pawns to their last position
+    --ret:AddDelay(0.1)
+
+    --Enemies
+    --[[
+    for i, target in pairs(targets) do
+    	LOG("target pos: " .. target:GetSpace():GetString())
+    	ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", target:GetSpace():GetString(), pathOffsets[#pathOffsets]:GetString()))
+    end
+    ]]
+
+    --Player also? I don't think so
 
     --Ret
 	return ret

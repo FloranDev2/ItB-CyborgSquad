@@ -1,3 +1,51 @@
+local function isCrack(weapon)
+	if type(weapon) == 'table' then
+    	weapon = weapon.__Id
+	end
+	if weapon == nil then
+		return false
+	end
+    local sub = string.sub(weapon, 9, 15)
+    if sub == "FAB5000" then
+    	return true
+    end
+	return false
+end
+
+local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
+--local HOOk_onSkillEnd = function(mission, pawn, weaponId, p1, p2)
+	--LOG(string.format("%s is using %s at %s!", pawn:GetMechName(), weaponId, p2:GetString()))
+	--LOG(string.format("%s has finished using %s at %s!", pawn:GetMechName(), weaponId, p2:GetString()))
+
+	local isCrack = false
+    local weapons = pawn:GetPoweredWeapons()
+    for j = 1, 2 do
+    	local weapon = weapons[j]
+		if type(weapon) == 'table' then
+	    	weapon = weapon.__Id
+		end
+
+		if weapon ~= nil and (weapon == "truelch_BurrowerAttack_A" or weapon == "truelch_BurrowerAttack_AB") then
+			isCrack = true
+		end
+	end
+
+	--LOG("isCrack: " .. tostring(isCrack))
+
+	if weaponId == "Move" and isCrack then
+		local crack = SpaceDamage(p1, 0)
+		crack.iCrack = EFFECT_CREATE
+		Board:AddEffect(crack)
+	end
+end
+
+local function EVENT_onModsLoaded()
+	modapiext:addSkillStartHook(HOOk_onSkillStart) --same
+	--modapiext:addSkillEndHook(HOOk_onSkillEnd)
+end
+
+modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
+
 truelch_BurrowerAttack = Skill:new{
 	--Infos
 	Name = "Bladed Carapace",
@@ -9,7 +57,7 @@ truelch_BurrowerAttack = Skill:new{
 	Rarity = 1,
 	PowerCost = 0,
 	Upgrades = 2,
-	UpgradeCost = {2,2},
+	UpgradeCost = { 1, 2 },
 
 	--Gameplay
 	--PathSize = 1, --what does that mean?
@@ -70,7 +118,10 @@ function truelch_BurrowerAttack:GetSkillEffect(p1,p2)
 
 	--Center
 	local dmg1 = SpaceDamage(p2, self.Damage)
-	dmg1.sSound = self.SoundBase.."attack"	
+	if self.Confuse == true then
+		dmg1 = SpaceDamage(p2, self.Damage, DIR_FLIP)
+	end
+	dmg1.sSound = self.SoundBase.."attack"
 	ret:AddDamage(dmg1)
 
 	--Right

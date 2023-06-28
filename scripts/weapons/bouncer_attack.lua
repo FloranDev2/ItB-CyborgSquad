@@ -1,3 +1,11 @@
+--[[
+It seems that the self damage doesn't work
+I also need to add the ability to attack when there's no pawn.
+(useful to move using the push back or also damage mountains)
+
+I launched a boss with 3 remaining HP into a vek with 2 remaining HP and it killed the boss too.
+]]
+
 truelch_BouncerAttack = Skill:new{
 	--Infos
 	Name = "Entangling Spinneret",

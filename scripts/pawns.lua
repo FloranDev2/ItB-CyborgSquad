@@ -183,7 +183,31 @@ truelch_BurrowerMech = Pawn:new {
 	Pushable = false,
 }
 
---Stole that from Metalocif!
+--I didn't added that at first, but I might need that in the end
+local oldMove = Move.GetTargetArea
+function Move:GetTargetArea(p, ...)
+	local mover = Board:GetPawn(p)
+	if mover and (mover:GetType() == "truelch_BurrowerMech") then
+		local pathType
+		if Board:GetTerrain(p) == TERRAIN_WATER then pathType = mover:GetPathProf() else pathType = PATH_FLYER end
+		local old = extract_table(Board:GetReachable(p, mover:GetMoveSpeed(), pathType))
+		local ret = PointList()
+
+		for _, v in ipairs(old) do
+			local terrain = Board:GetTerrain(v)
+
+			if terrain ~= TERRAIN_HOLE and terrain ~= TERRAIN_WATER then
+				ret:push_back(v)
+			end
+		end
+
+		return ret
+	end
+
+	return oldMove(self, p, ...)
+end
+
+--Stolen that from Metalocif!
 local oldMove = Move.GetSkillEffect
 function Move:GetSkillEffect(p1, p2, ...)
 	local mover = Board:GetPawn(p1)

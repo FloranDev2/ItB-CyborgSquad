@@ -6,6 +6,10 @@ I also need to add the ability to attack when there's no pawn.
 I launched a boss with 3 remaining HP into a vek with 2 remaining HP and it killed the boss too.
 ]]
 
+
+
+local tipIndex
+
 truelch_BouncerAttack = Skill:new{
 	--Infos
 	Name = "Entangling Spinneret",
@@ -29,8 +33,10 @@ truelch_BouncerAttack = Skill:new{
 	--Gameplay
 	Damage = 1, --if there's no pawn on the end tile
 	SelfDamage = 1,
-	Armored = false,
 	Range = 2,
+
+	Sweep = false,
+	Armored = false,
 
 	--Tip Image
 	TipImage = {
@@ -73,14 +79,17 @@ Weapon_Texts.truelch_BouncerAttack_Upgrade2 = "Reinforced carapace"
 
 truelch_BouncerAttack_A = truelch_BouncerAttack:new{
 	UpgradeDescription = "Can target any adjacent target.",
+	Sweep = true,
 }
 
 truelch_BouncerAttack_B = truelch_BouncerAttack:new{
-	UpgradeDescription = "Can target any adjacent target.",
+	UpgradeDescription = "The Mech gains armored.",
+	Armored = true,
 }
 
 truelch_BouncerAttack_AB = truelch_BouncerAttack:new{
-	UpgradeDescription = "Can target any adjacent target.",
+	Sweep = true,
+	Armored = true,
 }
 
 function truelch_BouncerAttack:GetSkillEffect(p1,p2)
@@ -131,6 +140,86 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1,p2)
 end
 
 
+--- FINAL EFFECT ---
+function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, dir, dirback)
+
+	LOG("Custom - A")
+
+	local pawn2 = Board:GetPawn(customP2)
+
+	LOG("Custom - B")
+
+	local pawn3 = Board:GetPawn(customP3)
+
+	LOG("Custom - C")
+
+	local selfDamage = 0
+
+	LOG("Custom - D")
+
+	local dmg2 = self.Damage
+	LOG("Custom - E")
+	if pawn3 ~= nil then
+		LOG("Custom - E1")
+		dmg2 = pawn3:GetHealth()
+		LOG("Custom - E2")
+		if pawn3:IsArmor() then
+			dmg2 = dmg2 + 1
+			LOG("Custom - E3")
+		end
+
+		--Self damage
+		selfDamage = self.SelfDamage
+		LOG("Custom - E4")
+	end
+
+	LOG("Custom - F")
+
+	local dmg3 = pawn2
+
+	LOG("Custom - G")
+
+	if pawn2 ~= nil then
+		dmg3 = pawn2:GetHealth()
+		if pawn2:IsArmor() then
+			dmg3 = dmg3 + 1
+		end
+	end	
+
+	--Self push + self damage (DO THAT MULTIPLE TIME?)
+	local selfDam = SpaceDamage(p1, 0, dirback)
+	selfDam.sAnimation = "airpush_"..dirback
+	ret:AddDamage(selfDam)
+
+	if pawn3 ~= nil then
+		local spaceDamage2 = SpaceDamage(customP2, 0)
+		spaceDamage2.sImageMark = "advanced/combat/throw_"..dir..".png"
+		ret:AddDamage(spaceDamage2)
+		--ret:AddBounce(p1, 3)
+		ret:AddBounce(customP2, -4)
+
+		--Move
+		local move = PointList()
+		move:push_back(customP2)
+		move:push_back(customP3)
+		ret:AddLeap(move, NO_DELAY) --test
+
+		--P3 damage
+		ret:AddDamage(SpaceDamage(customP3, dmg3))
+		ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
+		ret:AddBounce(customP3, 4)
+	else
+		--Otherwise, like a regular punch with 1 damage
+		local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
+		spaceDamage.sAnimation = "SwipeClaw2"
+		spaceDamage.sSound = self.SoundBase.."/attack"
+		ret:AddDamage(spaceDamage)
+	end
+
+	return ret
+end
+
+
 --[[
 Bugs:
 - When you launch a little enemy (1 HP) on a big enemy (3 HP), the big enemy will take whole damage.
@@ -139,6 +228,39 @@ Bugs:
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()
 
+	LOG("A")
+
+	local dir = GetDirection(p2 - p1)
+
+	LOG("B")
+
+	local dirback = GetDirection(p1 - p2)
+
+	LOG("C")
+
+	ret:AddBounce(p1, 3)
+
+	LOG("D")
+
+	self:truelch_FinalAttack(ret, p1, p2, p3, dir, dirback)
+
+	LOG("E")
+
+	if self.Sweep then
+		LOG("F")
+		local offset1 = DIR_VECTORS[(dir-1)%4]
+		local offset2 = DIR_VECTORS[(dir+1)%4]
+		self:truelch_FinalAttack(ret, p1, p2 + offset1, p3 + offset1, dir, dirback)
+		self:truelch_FinalAttack(ret, p1, p2 + offset2, p3 + offset2, dir, dirback)
+	end
+
+	LOG("G")
+
+	return ret
+end
+
+
+function truelch_FinalAttackOld(ret, customP2, customP3)
 	local pawn2 = Board:GetPawn(p2)
 	local pawn3 = Board:GetPawn(p3)
 
@@ -203,4 +325,3 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 
 	return ret
 end
-

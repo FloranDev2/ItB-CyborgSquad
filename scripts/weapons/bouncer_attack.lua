@@ -4,7 +4,45 @@ I also need to add the ability to attack when there's no pawn.
 (useful to move using the push back or also damage mountains)
 
 I launched a boss with 3 remaining HP into a vek with 2 remaining HP and it killed the boss too.
+Yeah, I can confirmed, p2 is taking p3's damage.
+Worse, p2 takes damage from itself!
+
+Also, the self damage doesn't work
 ]]
+
+
+local HOOK_onMissionStart = function(mission)
+	LOG("Mission started!")
+	for i = 0, 2 do
+		local pawn = Board:GetPawn(i)
+		local weapons = pawn:GetPoweredWeapons()
+		for j = 1, 2 do
+			local weapon = weapons[j]
+			--Maybe not necessary anymore, idk
+			if type(weapon) == 'table' then
+		    	weapon = weapon.__Id
+			end
+			if weapon == "truelch_BouncerAttack_B" or weapon == "truelch_BouncerAttack_AB" then
+				LOG("\n\nSet armor!!\n\n")
+				--pawn:SetArmored(true)
+				--pawn:SetArmor(true)
+				--pawn:SetFlying(true) --What about that? Can I access that at least??
+				LOG("\n\nTell me it worked\n\n")
+			end
+		end
+	end
+end
+
+local HOOK_onMissionEnd = function(mission)
+	LOG("Mission end!")
+end
+
+local function EVENT_onModsLoaded()
+	modApi:addMissionStartHook(HOOK_onMissionStart)
+	modApi:addMissionEndHook(HOOK_onMissionEnd)
+end
+
+modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
 
 
 
@@ -25,7 +63,7 @@ truelch_BouncerAttack = Skill:new{
 	Rarity = 1,
 	PowerCost = 0,
 	Upgrades = 2,
-	UpgradeCost = {2,2},
+	UpgradeCost = { 2, 1 },
 
 	--TC
 	TwoClick = true,
@@ -36,22 +74,21 @@ truelch_BouncerAttack = Skill:new{
 	Range = 2,
 
 	Sweep = false,
-	Armored = false,
 
 	--Tip Image
 	TipImage = {
-		Unit = Point(2,3),
-		Enemy = Point(2,2),
-		Enemy2 = Point(2,0),		
-		Target = Point(2,2),
-		Second_Click = Point(2,0),
+		Unit = Point(2, 3),
+		Enemy = Point(2, 2),
+		Enemy2 = Point(2, 0),		
+		Target = Point(2, 2),
+		Second_Click = Point(2, 0),
 
-		--Enemy3 = Point(1,3),
-		--Second_Origin = Point(2,3),
-		--Second_Target = Point(1,3),
+		--Enemy3 = Point(1, 3),
+		--Second_Origin = Point(2, 3),
+		--Second_Target = Point(1, 3),
 		--What's the second click for the second attack in the tip image?
 
-		--Enemy_Damaged = Point(2,2),
+		--Enemy_Damaged = Point(2, 2),
 
 		CustomPawn = "truelch_BouncerMech"
 	}
@@ -83,13 +120,14 @@ truelch_BouncerAttack_A = truelch_BouncerAttack:new{
 }
 
 truelch_BouncerAttack_B = truelch_BouncerAttack:new{
-	UpgradeDescription = "The Mech gains armored.",
-	Armored = true,
+	--UpgradeDescription = "The Mech gains armored.",
+	UpgradeDescription = "The Mech doesn't take self damage anymore.",
+	SelfDamage = 0,
 }
 
 truelch_BouncerAttack_AB = truelch_BouncerAttack:new{
 	Sweep = true,
-	Armored = true,
+	SelfDamage = 0,
 }
 
 function truelch_BouncerAttack:GetSkillEffect(p1,p2)
@@ -143,41 +181,41 @@ end
 --- FINAL EFFECT ---
 function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, dir, dirback)
 
-	LOG("Custom - A")
+	--LOG("Custom - A")
 
 	local pawn2 = Board:GetPawn(customP2)
 
-	LOG("Custom - B")
+	--LOG("Custom - B")
 
 	local pawn3 = Board:GetPawn(customP3)
 
-	LOG("Custom - C")
+	--LOG("Custom - C")
 
 	local selfDamage = 0
 
-	LOG("Custom - D")
+	--LOG("Custom - D")
 
 	local dmg2 = self.Damage
-	LOG("Custom - E")
+	--LOG("Custom - E")
 	if pawn3 ~= nil then
-		LOG("Custom - E1")
+		--LOG("Custom - E1")
 		dmg2 = pawn3:GetHealth()
-		LOG("Custom - E2")
+		--LOG("Custom - E2")
 		if pawn3:IsArmor() then
 			dmg2 = dmg2 + 1
-			LOG("Custom - E3")
+			--LOG("Custom - E3")
 		end
 
 		--Self damage
 		selfDamage = self.SelfDamage
-		LOG("Custom - E4")
+		--LOG("Custom - E4")
 	end
 
-	LOG("Custom - F")
+	--LOG("Custom - F")
 
 	local dmg3 = pawn2
 
-	LOG("Custom - G")
+	--LOG("Custom - G")
 
 	if pawn2 ~= nil then
 		dmg3 = pawn2:GetHealth()
@@ -228,33 +266,33 @@ Bugs:
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()
 
-	LOG("A")
+	--LOG("A")
 
 	local dir = GetDirection(p2 - p1)
 
-	LOG("B")
+	--LOG("B")
 
 	local dirback = GetDirection(p1 - p2)
 
-	LOG("C")
+	--LOG("C")
 
 	ret:AddBounce(p1, 3)
 
-	LOG("D")
+	--LOG("D")
 
 	self:truelch_FinalAttack(ret, p1, p2, p3, dir, dirback)
 
-	LOG("E")
+	--LOG("E")
 
 	if self.Sweep then
-		LOG("F")
+		--LOG("F")
 		local offset1 = DIR_VECTORS[(dir-1)%4]
 		local offset2 = DIR_VECTORS[(dir+1)%4]
 		self:truelch_FinalAttack(ret, p1, p2 + offset1, p3 + offset1, dir, dirback)
 		self:truelch_FinalAttack(ret, p1, p2 + offset2, p3 + offset2, dir, dirback)
 	end
 
-	LOG("G")
+	--LOG("G")
 
 	return ret
 end

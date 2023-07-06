@@ -5,6 +5,10 @@ No matching overload found, candidates:
 void __add(lua_State*,Point&,Point)
 
 The issue is in GetSecondTargetArea()
+
+TODO: path's size max = move?
+Or we calculate the path size like this:
+max = remainingMove + 2
 ]]
 
 --------------------------------------------------- IMPORTS
@@ -114,7 +118,7 @@ local function containTarget(pawn)
     return -1 --"false"
 end
 
-local function computeTarget(p1, p2)
+local function computeTarget(p1, p2, max)
 	--We want to have p1 in the target area so we can just click
 	--without accidentally add / remove a target to validate the first phase
 	if p1 == p2 then
@@ -125,11 +129,17 @@ local function computeTarget(p1, p2)
 	if pawn ~= nil then
 		local index = containTarget(pawn) -- -1 => "false" / else => true
 		if index == -1 then
-			--does not contain -> we add it
-			table.insert(targets, pawn)
-			customAnim:add(p2, "truelch_hold_back")
-			customAnim:add(p2, "truelch_hold_front")
-			--LOG("add at: " .. point:GetString())
+	    	--Is count ok?
+		    LOG("targets count: " .. tostring(#targets))
+		    if #targets < max then
+				--does not contain -> we add it
+				table.insert(targets, pawn)
+				customAnim:add(p2, "truelch_hold_back")
+				customAnim:add(p2, "truelch_hold_front")
+				--LOG("add at: " .. point:GetString())
+		    else
+		    	LOG("Count not okay!")
+		    end
 		else
 			--contains -> we remove it
 			table.remove(targets, index)
@@ -155,19 +165,6 @@ local function onWeaponUnarmed(weapon, pawnId)
 		--LOG("return")
 		return
 	end
-
-	--[[
-	--Clear animations
-    for index, target in pairs(targets) do
-    	local point = target:GetSpace()
-		customAnim:rem(point, "truelch_hold_back")
-		customAnim:rem(point, "truelch_hold_front")
-		--LOG("clear at: "..point:GetString())
-    end
-
-	--Clear targets
-	targets = {}
-	]]
 
 	--new
 	clear()
@@ -274,7 +271,7 @@ local function trim(offsetGoal)
 end
 
 --TODO: trim if we find an offset we already had
-local function tryAddOffset(p1, p3)
+local function tryAddOffset(p1, p3, max)
 	local offset = p3 - p1
 	local isOk = true
 
@@ -288,6 +285,12 @@ local function tryAddOffset(p1, p3)
 
     --Also need to be ok for player
     isOk = isOk and isOffsetFromStartPosOk(p1, p1, offset)
+
+    --Max distance?
+    if #pathOffsets >= max then
+    	LOG("\n\nCan't add point, the path reached its maximum size!")
+    	isOk = false
+    end
 
 	--If ok -> let's go
 	if isOk then
@@ -333,10 +336,17 @@ truelch_ScorpionAttack = Skill:new{
 	--if we want to not use the weapon if we don't target at least *1* enemy (or even any unit?)
 	MinTargets = 0, --1
 	--Upgrade people, upgrade!
-	MaxTargets = 4, --1
+	MaxTargets = 1, --1
 	MaxDistance = 4, --max size of the offsets list basically
 
 	--Tip image
+	CustomTipImage = "truelch_ScorpionAttack_Tip",
+	--[[
+	TipImgPathOffsets = {
+		Point(0, 1),
+		Point(1, 0),
+		Point(0, 1),
+	}
 	TipImage = {
 		Unit = Point(2,3),
 		--Target = Point(2,2),
@@ -344,6 +354,7 @@ truelch_ScorpionAttack = Skill:new{
 		--Second_Click = Point(3,1),
 		CustomPawn = "truelch_ScorpionMech"
 	},
+	]]
 }
 
 Weapon_Texts.truelch_ScorpionAttack_Upgrade1 = "Extended spinneret"
@@ -351,19 +362,23 @@ Weapon_Texts.truelch_ScorpionAttack_Upgrade2 = "+1 Damage"
 
 truelch_ScorpionAttack_A = truelch_ScorpionAttack:new{
 	UpgradeDescription = "Can target any adjacent target.",
+	MaxTargets = 4,
+	CustomTipImage = "truelch_ScorpionAttack_Tip_A",
 }
 
 truelch_ScorpionAttack_B = truelch_ScorpionAttack:new{
 	UpgradeDescription = "Increases damage by 1.",
 	Damage = 2,
+	CustomTipImage = "truelch_ScorpionAttack_Tip_B",
 }
 
 truelch_ScorpionAttack_AB = truelch_ScorpionAttack:new{
+	MaxTargets = 4,
 	Damage = 2,
+	CustomTipImage = "truelch_ScorpionAttack_Tip_AB",
 }
 
 function truelch_ScorpionAttack:IsControllable(p2)
-
 	if not Board:IsPawnSpace(p2) then
 		return false
 	end
@@ -416,7 +431,7 @@ function truelch_ScorpionAttack:GetSkillEffect(p1, p2)
 	local ret = SkillEffect()
 
 	--Compute target
-	computeTarget(p1, p2)
+	computeTarget(p1, p2, self.MaxTargets)
 
 	--Iterate (target is a pawn btw)
     for _, target in pairs(targets) do
@@ -468,7 +483,7 @@ function truelch_ScorpionAttack:GetFinalEffectTest(p1, p2, p3)
 	local direction = GetDirection(p3 - p2)
 
 	--Not sure where to put that
-	tryAddOffset(p1, p3)
+	tryAddOffset(p1, p3, self.MaxDistance)
 	
 	--Damage first
     for i, target in pairs(targets) do
@@ -511,7 +526,7 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	local direction = GetDirection(p3 - p2)
 
 	--Not sure where to put that
-	tryAddOffset(p1, p3)
+	tryAddOffset(p1, p3, self.MaxDistance)
 	
 	--Damage first
     for i, target in pairs(targets) do
@@ -565,5 +580,101 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
     --Player also? I don't think so
 
     --Ret
+	return ret
+end
+
+--------------------------------------------------- CUSTOM TIP IMAGE
+truelch_ScorpionAttack_Tip = truelch_ScorpionAttack:new{
+	TwoClick = false,
+	TipImgPathOffsets = {
+		Point(0, -1),
+		Point(1, -1), --Point(1, 0),
+	},
+	TipImgTgtPos = {
+		Point(2, 2),
+	},
+	TipImage = {
+		Unit = Point(2, 3),
+		Target = Point(2, 2),
+		Enemy = Point(2, 2),
+		CustomPawn = "truelch_ScorpionMech"
+	},
+}
+
+truelch_ScorpionAttack_Tip_A = truelch_ScorpionAttack_Tip:new{
+	MaxTargets = 4,
+	TipImgTgtPos = {
+		Point(2, 2),
+		Point(1, 3),
+		Point(3, 3),
+	},
+	TipImage = {
+		Unit = Point(2, 3),
+		Target = Point(2, 2),
+		Enemy  = Point(2, 2),
+		Enemy2 = Point(1, 3),
+		Enemy3 = Point(3, 3),
+		CustomPawn = "truelch_ScorpionMech"
+	},
+}
+
+truelch_ScorpionAttack_Tip_B = truelch_ScorpionAttack_Tip:new{
+	Damage = 2,
+}
+
+truelch_ScorpionAttack_Tip_AB = truelch_ScorpionAttack_Tip:new{
+	MaxTargets = 4,
+	Damage = 2,
+	TipImgTgtPos = {
+		Point(2, 2),
+		Point(1, 3),
+		Point(3, 3),
+	},
+	TipImage = {
+		Unit = Point(2, 3),
+		Target = Point(2, 2),
+		Enemy  = Point(2, 2),
+		Enemy2 = Point(1, 3),
+		Enemy3 = Point(3, 3),
+		CustomPawn = "truelch_ScorpionMech"
+	},
+}
+
+function truelch_ScorpionAttack_Tip:GetSkillEffect(p1, p2)
+	local ret = SkillEffect()
+
+	--CUSTOM TIP IMAGE: TARGETS
+	local customTargets = {}
+	--table.insert(customTargets, Board:GetPawn(Point(2, 2))) --position of the tip image enemy (TODO: change that for the upgraded version)
+	for i, tgtPos in pairs(self.TipImgTgtPos) do
+		table.insert(customTargets, Board:GetPawn(tgtPos))
+	end
+	
+	--Damage first
+    for i, target in pairs(customTargets) do
+    	local spaceDamage = SpaceDamage(target:GetSpace(), self.Damage)
+	    ret:AddDamage(spaceDamage)
+    end
+
+	--Apply move to enemies
+    for i, target in pairs(customTargets) do
+    	local move = PointList()
+    	move:push_back(target:GetSpace())
+	    for j, offset in pairs(self.TipImgPathOffsets) do
+	        local curr = target:GetSpace() + offset
+	        move:push_back(curr)
+	    end
+	    ret:AddLeap(move, NO_DELAY)
+    end
+
+    --Apply move to self
+	local move = PointList()
+	move:push_back(Board:GetPawn(p1):GetSpace())
+    for j, offset in pairs(self.TipImgPathOffsets) do
+        local curr = p1 + offset
+        move:push_back(curr)
+    end
+    ret:AddLeap(move, NO_DELAY)
+
 	return ret
 end

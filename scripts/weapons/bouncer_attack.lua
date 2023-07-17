@@ -180,42 +180,23 @@ end
 
 --- FINAL EFFECT ---
 function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, dir, dirback)
-
-	--LOG("Custom - A")
-
 	local pawn2 = Board:GetPawn(customP2)
-
-	--LOG("Custom - B")
-
 	local pawn3 = Board:GetPawn(customP3)
-
-	--LOG("Custom - C")
 
 	local selfDamage = 0
 
-	--LOG("Custom - D")
-
 	local dmg2 = self.Damage
-	--LOG("Custom - E")
 	if pawn3 ~= nil then
-		--LOG("Custom - E1")
 		dmg2 = pawn3:GetHealth()
-		--LOG("Custom - E2")
 		if pawn3:IsArmor() then
 			dmg2 = dmg2 + 1
-			--LOG("Custom - E3")
 		end
 
 		--Self damage
 		selfDamage = self.SelfDamage
-		--LOG("Custom - E4")
 	end
 
-	--LOG("Custom - F")
-
 	local dmg3 = pawn2
-
-	--LOG("Custom - G")
 
 	if pawn2 ~= nil then
 		dmg3 = pawn2:GetHealth()
@@ -225,7 +206,8 @@ function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, 
 	end	
 
 	--Self push + self damage (DO THAT MULTIPLE TIME?)
-	local selfDam = SpaceDamage(p1, 0, dirback)
+	--local selfDam = SpaceDamage(p1, 0, dirback)
+	local selfDam = SpaceDamage(p1, selfDamage, dirback)
 	selfDam.sAnimation = "airpush_"..dirback
 	ret:AddDamage(selfDam)
 
@@ -262,6 +244,11 @@ end
 Bugs:
 - When you launch a little enemy (1 HP) on a big enemy (3 HP), the big enemy will take whole damage.
   The other way around works properly though.
+]]
+--[[Read from line 332 of knight.lua
+the idea is to first move a pawn to (-1, -1), do the effect for the other pawn
+and then move in the first pawn.
+We can define the first pawn as the one surviving.
 ]]
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()

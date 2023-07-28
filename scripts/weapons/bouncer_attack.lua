@@ -180,6 +180,110 @@ end
 
 --- FINAL EFFECT ---
 function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, dir, dirback)
+	LOG("truelch_BouncerAttack:truelch_FinalAttack")
+	local pawn2 = Board:GetPawn(customP2)
+	local pawn3 = Board:GetPawn(customP3)
+
+	LOG("A")
+
+	local selfDamage = 0
+
+	local dmg2 = self.Damage
+	if pawn3 ~= nil then
+		dmg2 = pawn3:GetHealth()
+		if pawn3:IsArmor() then
+			dmg2 = dmg2 + 1
+		end
+
+		--Self damage
+		selfDamage = self.SelfDamage
+	end
+
+	LOG("B")
+
+	local dmg3 = pawn2
+
+	if pawn2 ~= nil then
+		dmg3 = pawn2:GetHealth()
+		if pawn2:IsArmor() then
+			dmg3 = dmg3 + 1
+		end
+	end	
+
+	--Self push + self damage (DO THAT MULTIPLE TIME?)
+	local selfDam = SpaceDamage(p1, selfDamage, dirback)
+	selfDam.sAnimation = "airpush_"..dirback
+	ret:AddDamage(selfDam)
+
+	if pawn3 ~= nil then
+		--Move the pawn out of the way so it does not take p3 damage
+		local pawn2 = Board:GetPawn(customP2)
+		pawn2:SetSpace(Point(-1, -1))
+
+		--P3 damage
+		ret:AddDamage(SpaceDamage(customP3, dmg3))
+		ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
+		ret:AddBounce(customP3, 4)
+
+		--Move back to original pos
+		pawn2:SetSpace(customP2)
+
+		--Space damage 2
+		local spaceDamage2 = SpaceDamage(customP2, 0)
+		spaceDamage2.sImageMark = "advanced/combat/throw_"..dir..".png"
+		ret:AddDamage(spaceDamage2)
+		ret:AddBounce(customP2, -4)
+
+		--Leap
+		local move = PointList()
+		move:push_back(customP2)
+		move:push_back(customP3)
+		ret:AddLeap(move, NO_DELAY)
+
+
+	else
+		--Otherwise, like a regular punch with 1 damage
+		local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
+		spaceDamage.sAnimation = "SwipeClaw2"
+		spaceDamage.sSound = self.SoundBase.."/attack"
+		ret:AddDamage(spaceDamage)
+	end
+
+	return ret
+end
+
+
+--[[
+Bugs:
+- When you launch a little enemy (1 HP) on a big enemy (3 HP), the big enemy will take whole damage.
+  The other way around works properly though.
+]]
+--[[Read from line 332 of knight.lua
+the idea is to first move a pawn to (-1, -1), do the effect for the other pawn
+and then move in the first pawn.
+We can define the first pawn as the one surviving.
+]]
+function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
+	local ret = SkillEffect()
+	local dir = GetDirection(p2 - p1)
+	local dirback = GetDirection(p1 - p2)
+
+	ret:AddBounce(p1, 3)
+
+	self:truelch_FinalAttack(ret, p1, p2, p3, dir, dirback)
+
+	if self.Sweep then
+		local offset1 = DIR_VECTORS[(dir-1)%4]
+		local offset2 = DIR_VECTORS[(dir+1)%4]
+		self:truelch_FinalAttack(ret, p1, p2 + offset1, p3 + offset1, dir, dirback)
+		self:truelch_FinalAttack(ret, p1, p2 + offset2, p3 + offset2, dir, dirback)
+	end
+
+	return ret
+end
+
+
+function truelch_BouncerAttack:truelch_FinalAttackBackUp(ret, p1, customP2, customP3, dir, dirback)
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -234,118 +338,6 @@ function truelch_BouncerAttack:truelch_FinalAttack(ret, p1, customP2, customP3, 
 		spaceDamage.sAnimation = "SwipeClaw2"
 		spaceDamage.sSound = self.SoundBase.."/attack"
 		ret:AddDamage(spaceDamage)
-	end
-
-	return ret
-end
-
-
---[[
-Bugs:
-- When you launch a little enemy (1 HP) on a big enemy (3 HP), the big enemy will take whole damage.
-  The other way around works properly though.
-]]
---[[Read from line 332 of knight.lua
-the idea is to first move a pawn to (-1, -1), do the effect for the other pawn
-and then move in the first pawn.
-We can define the first pawn as the one surviving.
-]]
-function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
-	local ret = SkillEffect()
-
-	--LOG("A")
-
-	local dir = GetDirection(p2 - p1)
-
-	--LOG("B")
-
-	local dirback = GetDirection(p1 - p2)
-
-	--LOG("C")
-
-	ret:AddBounce(p1, 3)
-
-	--LOG("D")
-
-	self:truelch_FinalAttack(ret, p1, p2, p3, dir, dirback)
-
-	--LOG("E")
-
-	if self.Sweep then
-		--LOG("F")
-		local offset1 = DIR_VECTORS[(dir-1)%4]
-		local offset2 = DIR_VECTORS[(dir+1)%4]
-		self:truelch_FinalAttack(ret, p1, p2 + offset1, p3 + offset1, dir, dirback)
-		self:truelch_FinalAttack(ret, p1, p2 + offset2, p3 + offset2, dir, dirback)
-	end
-
-	--LOG("G")
-
-	return ret
-end
-
-
-function truelch_FinalAttackOld(ret, customP2, customP3)
-	local pawn2 = Board:GetPawn(p2)
-	local pawn3 = Board:GetPawn(p3)
-
-	local selfDamage = 0
-
-	local dmg2 = self.Damage
-	if pawn3 ~= nil then
-		dmg2 = pawn3:GetHealth()
-		if pawn3:IsArmor() then
-			dmg2 = dmg2 + 1
-		end
-
-		--Self damage
-		selfDamage = self.SelfDamage
-	end
-
-	local dmg3 = pawn2
-	if pawn2 ~= nil then
-		dmg3 = pawn2:GetHealth()
-		if pawn2:IsArmor() then
-			dmg3 = dmg3 + 1
-		end
-	end	
-
-	--Self push + self damage
-	local dirback = GetDirection(p1 - p2)
-	local selfDam = SpaceDamage(p1, 0, dirback)
-	selfDam.sAnimation = "airpush_"..dirback
-	ret:AddDamage(selfDam)
-
-	if pawn3 ~= nil then
-		--Throw at enemy
-	
-		--P2 damage
-		local spaceDamage2 = SpaceDamage(p2, 0)
-		spaceDamage2.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
-		--ret:AddMelee(p1, spaceDamage1)
-		ret:AddDamage(spaceDamage2) --works better
-		ret:AddBounce(p1, 3)
-		ret:AddBounce(p2, -4)
-
-		--Move
-		local move = PointList()
-		move:push_back(p2)
-		move:push_back(p3)
-		ret:AddLeap(move, FULL_DELAY)
-
-		--P3 damage
-		--ret:AddDamage(SpaceDamage(p3, self.Damage))
-		ret:AddDamage(SpaceDamage(p3, dmg3)) --works better
-		ret:AddBurst(p3, "Emitter_Crack_Start2", DIR_NONE)
-		ret:AddBounce(p3, 4)
-	else
-		--Otherwise, like a regular punch with 1 damage
-		local direction = GetDirection(p2 - p1)
-		local spaceDamage = SpaceDamage(p2, self.Damage, direction)
-		spaceDamage.sAnimation = "SwipeClaw2"
-		spaceDamage.sSound = self.SoundBase.."/attack"
-		--ret:AddMelee(p2 - DIR_VECTORS[direction], spaceDamage)
-		ret:AddDamage(spaceDamage) --works better
 	end
 
 	return ret

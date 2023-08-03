@@ -450,14 +450,16 @@ end
 
 -- TWO CLICKS
 function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
-	local ret = PointList()	
+	local ret = PointList()
 	
 	--Compute
 	tmpList = {}
-	for dir = DIR_START, DIR_END do
-		local curr = previousPoint + DIR_VECTORS[dir]
-		if not isPointAlreadyInTheList() then
-			table.insert(tmpList, curr)
+	if previousPoint ~= nil then
+		for dir = DIR_START, DIR_END do
+			local curr = previousPoint + DIR_VECTORS[dir]
+			if not isPointAlreadyInTheList() then
+				table.insert(tmpList, curr)
+			end
 		end
 	end
 

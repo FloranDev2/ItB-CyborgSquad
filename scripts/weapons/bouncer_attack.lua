@@ -76,17 +76,34 @@ truelch_BouncerAttack_AB = truelch_BouncerAttack:new{
 	SelfDamage = 0,
 }
 
-function truelch_BouncerAttack:GetSkillEffect(p1,p2)
+--[[
+function truelch_BouncerAttack:IsTwoClickException(p1, p2)
+	if not Board:IsPawnSpace(p2) then
+		return true
+	end
+	
+	return false
+end
+]]
+
+--p is p2 or the adjacent point when the weapon is upgraded
+--[[
+function truelch_BouncerAttack:ExtGetSE(p)
+	if ()
+end
+]]
+
+function truelch_BouncerAttack:GetSkillEffect(p1, p2)
 	local ret = SkillEffect()
-	local damage = SpaceDamage(p2,0)
+	--local damage = SpaceDamage(p2, 0)
+	local damage = SpaceDamage(p2, 0)
 	local direction = GetDirection(p2 - p1)
 
-	if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then
-	
+	if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then	
 		for i = 1, self.Range do
-			local curr = p2 + DIR_VECTORS[direction]*i
+			local curr = p2 + DIR_VECTORS[direction] * i
 			if Board:IsValid(curr) and Board:IsBlocked(curr, PATH_FLYER) then
-				local block_image = SpaceDamage(curr,0)
+				local block_image = SpaceDamage(curr, 0)
 				block_image.sImageMark = "advanced/combat/icons/icon_throwblocked_glow.png"
 				ret:AddDamage(block_image)
 			end
@@ -94,18 +111,65 @@ function truelch_BouncerAttack:GetSkillEffect(p1,p2)
 	
 		local empty_spaces = self:GetSecondTargetArea(p1, p2)
 		if not empty_spaces:empty() then
-			damage.sImageMark = "advanced/combat/throw_"..GetDirection(p2-p1)..".png"
+			--damage.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
+			damage.sImageMark = "advanced/combat/throw_"..direction..".png"
 			ret:AddMelee(p1, damage)
-			return ret			
+			return ret
 		end
 	end
 	
-	damage.sImageMark = "advanced/combat/throw_"..GetDirection(p2-p1).."_off.png"
+	damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png"
 	ret:AddDamage(damage)
 	return ret
 end
 
-function truelch_BouncerAttack:GetSecondTargetArea(p1,p2)
+function truelch_BouncerAttack:BACK_UP_GetSkillEffect(p1, p2)
+	local ret = SkillEffect()
+	--local damage = SpaceDamage(p2, 0)
+	local damage = SpaceDamage(p2, 0)
+	local direction = GetDirection(p2 - p1)
+
+	if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then	
+		for i = 1, self.Range do
+			local curr = p2 + DIR_VECTORS[direction] * i
+			if Board:IsValid(curr) and Board:IsBlocked(curr, PATH_FLYER) then
+				local block_image = SpaceDamage(curr, 0)
+				block_image.sImageMark = "advanced/combat/icons/icon_throwblocked_glow.png"
+				ret:AddDamage(block_image)
+			end
+		end
+	
+		local empty_spaces = self:GetSecondTargetArea(p1, p2)
+		if not empty_spaces:empty() then
+			--damage.sImageMark = "advanced/combat/throw_"..GetDirection(p2 - p1)..".png"
+			damage.sImageMark = "advanced/combat/throw_"..direction..".png"
+			ret:AddMelee(p1, damage)
+			return ret
+		end
+	end
+	
+	damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png"
+	ret:AddDamage(damage)
+	return ret
+end
+
+function truelch_BouncerAttack:GetSecondTargetArea(p1, p2)
+	local ret = PointList()
+	local direction = GetDirection(p2 - p1)
+	
+	if Board:IsPawnSpace(p2) and Board:GetPawn(p2):IsGuarding() then
+		return ret
+	end
+	
+	for i = 1, self.Range do
+		local curr = p2 + DIR_VECTORS[direction] * i
+		ret:push_back(curr)
+	end
+	
+	return ret
+end
+
+function truelch_BouncerAttack:BACK_UP_GetSecondTargetArea(p1, p2)
 	local ret = PointList()
 	local direction = GetDirection(p2 - p1)
 	
@@ -114,10 +178,8 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1,p2)
 	end
 	
 	for i = 1, self.Range do
-		local curr = p2 + DIR_VECTORS[direction]*i
-		--if Board:IsValid(curr) and not Board:IsBlocked(curr, PATH_FLYER) then
+		local curr = p2 + DIR_VECTORS[direction] * i
 		ret:push_back(curr)
-		--end
 	end
 	
 	return ret
@@ -145,6 +207,7 @@ function truelch_BouncerAttack:FinalAttackCommon(ret, customP2, customP3, dir, p
 end
 
 function truelch_BouncerAttack:FinalAttack(ret, p1, customP2, customP3, dir, dirback)
+	--LOG("--- FinalAttack ---")
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -161,8 +224,7 @@ function truelch_BouncerAttack:FinalAttack(ret, p1, customP2, customP3, dir, dir
 		selfDamage = self.SelfDamage
 	end
 
-	local dmg3 = pawn2
-
+	local dmg3 = self.Damage
 	if pawn2 ~= nil then
 		dmg3 = pawn2:GetHealth()
 		if pawn2:IsArmor() then
@@ -174,7 +236,10 @@ function truelch_BouncerAttack:FinalAttack(ret, p1, customP2, customP3, dir, dir
 	selfDam.sAnimation = "airpush_"..dirback
 	ret:AddDamage(selfDam)
 
-	if pawn3 ~= nil then
+	--LOG("type(pawn3): " .. type(pawn3) .. ", if pawn3 ~= nil then:")
+
+	if pawn3 ~= nil and pawn2 ~= nil then --attempt to compare with number
+		--LOG("-> pawn3 ~= nil")
 		if dmg2 < dmg3 then
 			self:FinalAttackCommon(ret, customP2, customP3, dir, pawn2, pawn3, dmg2)
 		else
@@ -182,12 +247,15 @@ function truelch_BouncerAttack:FinalAttack(ret, p1, customP2, customP3, dir, dir
 		end
 
 	else
+		--LOG("Else")
 		--Otherwise, like a regular punch with 1 damage
 		local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
 		spaceDamage.sAnimation = "SwipeClaw2"
 		spaceDamage.sSound = self.SoundBase.."/attack"
 		ret:AddDamage(spaceDamage)
 	end
+
+	--LOG("End")
 end
 
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)

@@ -288,7 +288,7 @@ local function tryAddOffset(p1, p3, max)
 
     --Max distance?
     if #pathOffsets >= max then
-    	LOG("\n\nCan't add point, the path reached its maximum size!")
+    	--LOG("\n\nCan't add point, the path reached its maximum size!")
     	isOk = false
     end
 
@@ -312,7 +312,7 @@ end
 truelch_ScorpionAttack = Skill:new{
 	--Infos
 	Name = "Entangling Spinneret",
-	Description = "Target an adjacent enemy, and move it with the Mech, damaging it",
+	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.",
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_scorpion_attack.png",
 
@@ -401,12 +401,21 @@ function truelch_ScorpionAttack:IsControllable(p2)
 		return true
 	end
 	
+	--Do we want to be able to move boulders?
+	--No:
+	--[[
 	if (pawn:GetMoveSpeed() ~= 0 or pawn:IsGrappled()) and
 		pawn:GetBaseMove() ~= 0 then
+		LOG("return true (2)")
 		return true
 	end
 
+	LOG("return false (end)")
 	return false
+	]]
+
+	--Yes:
+	return true
 end
 
 function truelch_ScorpionAttack:GetTargetArea(point)
@@ -416,7 +425,7 @@ function truelch_ScorpionAttack:GetTargetArea(point)
 
 	for dir = DIR_START, DIR_END do
 		for range = 1, self.Range do
-			local curr = point + DIR_VECTORS[dir]*range
+			local curr = point + DIR_VECTORS[dir] * range
 			if self:IsControllable(curr) then
 				ret:push_back(curr)
 			end
@@ -521,7 +530,7 @@ Fix attemps:
 2: leap: works, but isn't thematically satisfying
 3: use flying path: shouldn't work anyway since we give a list of points in the end.
 	Plus, it wouldn't match the path the player created all the time. (shortest path vs custom path)
-4: 
+4: charge
 ]]
 function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()

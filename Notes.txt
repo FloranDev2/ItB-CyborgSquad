@@ -10,3 +10,13 @@ Unfair tweaks by arro -> nano mech's weapon
 Move:
 https://discord.com/channels/417639520507527189/1062451817918767134/1118976718393311315
 
+
+
+
+
+
+TODO:
+- Some issue when restarting the path with the Scorpion
+- Add path for the scorpion
+- Finish the implementation of fake small steps:
+	- Set space one by one the pawns, BUT, still use the move, so the preview show something good

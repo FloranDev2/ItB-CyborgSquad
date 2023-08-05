@@ -68,7 +68,7 @@ a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_s
 a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -24, PosY = -9, NumFrames = 4 }
 a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = -7 }
 a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -19, PosY = -12 }
-a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -17, PosY = -7 }
+a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -29, PosY = -8 }
 a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png", }
 
 truelch_ScorpionMech = Pawn:new {

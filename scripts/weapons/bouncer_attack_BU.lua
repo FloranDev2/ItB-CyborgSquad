@@ -121,7 +121,7 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1, p2)
 	return ret
 end
 
-function truelch_BouncerAttack:FinalAttackCommonStep1(ret, customP2, customP3, dir, pawn2, pawn3, dmg, isDelay)
+function truelch_BouncerAttack:FinalAttackCommon(ret, customP2, customP3, dir, pawn2, pawn3, dmg)
 	--Bounce and burst
 	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
 	ret:AddBounce(customP3, 4)
@@ -136,22 +136,13 @@ function truelch_BouncerAttack:FinalAttackCommonStep1(ret, customP2, customP3, d
 	local move = PointList()
 	move:push_back(customP2)
 	move:push_back(customP3)
-	--ret:AddLeap(move, FULL_DELAY) --need to move that
-	local delay = NO_DELAY
-	if isDelay then
-		delay = FULL_DELAY
-	end
-	ret:AddLeap(move, delay)
+	ret:AddLeap(move, FULL_DELAY)
 
 	--P2 Damage
 	ret:AddDamage(SpaceDamage(customP3, dmg))
 end
 
-function truelch_BouncerAttack:FinalAttackCommonStep2(ret, customP2, customP3, dir, pawn2, pawn3, dmg)
-
-end
-
-function truelch_BouncerAttack:FinalAttackStep1(ret, p1, customP2, customP3, dir, isDelay)
+function truelch_BouncerAttack:FinalAttack(ret, p1, customP2, customP3, dir)
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -188,10 +179,6 @@ function truelch_BouncerAttack:FinalAttackStep1(ret, p1, customP2, customP3, dir
 	end
 end
 
-function truelch_BouncerAttack:FinalAttackStep2()
-
-end
-
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local ret = SkillEffect()
 	local dir = GetDirection(p2 - p1)
@@ -202,12 +189,12 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	ret:AddBounce(p1, 3)
 
 	--Step 1
-	self:FinalAttackStep1(ret, p1, p2, p3, dir, false)
+	self:FinalAttack(ret, p1, p2, p3, dir)
 	if self.Sweep then
 		local offset1 = DIR_VECTORS[(dir-1)%4]
 		local offset2 = DIR_VECTORS[(dir+1)%4]
-		self:FinalAttackStep1(ret, p1, p2 + offset1, p3 + offset1, dir, false)
-		self:FinalAttackStep1(ret, p1, p2 + offset2, p3 + offset2, dir, true)
+		self:FinalAttack(ret, p1, p2 + offset1, p3 + offset1, dir)
+		self:FinalAttack(ret, p1, p2 + offset2, p3 + offset2, dir)
 	end
 
 	--Self damage and push back
@@ -218,15 +205,6 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local selfDamSD = SpaceDamage(p1, selfDmg, dirback)
 	selfDamSD.sAnimation = "airpush_"..dirback
 	ret:AddDamage(selfDamSD)
-
-	--Step 2
-	self:FinalAttackStep2(ret, p1, p2, p3, dir)
-	if self.Sweep then
-		local offset1 = DIR_VECTORS[(dir-1)%4]
-		local offset2 = DIR_VECTORS[(dir+1)%4]
-		self:FinalAttackStep2(ret, p1, p2 + offset1, p3 + offset1, dir)
-		self:FinalAttackStep2(ret, p1, p2 + offset2, p3 + offset2, dir)
-	end
 
 	--Return
 	return ret

@@ -25,6 +25,7 @@ function mod:init()
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")
 	require(self.scriptPath.."/weapons/bouncer_attack")
+	--require(self.scriptPath.."/weapons/bouncer_attack_BU") --this one is functional but has wacky delays
 	require(self.scriptPath.."/weapons/burrower_attack")
 
 	--Pawns

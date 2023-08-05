@@ -341,20 +341,6 @@ truelch_ScorpionAttack = Skill:new{
 
 	--Tip image
 	CustomTipImage = "truelch_ScorpionAttack_Tip",
-	--[[
-	TipImgPathOffsets = {
-		Point(0, 1),
-		Point(1, 0),
-		Point(0, 1),
-	}
-	TipImage = {
-		Unit = Point(2,3),
-		--Target = Point(2,2),
-		--Enemy = Point(2,2),
-		--Second_Click = Point(3,1),
-		CustomPawn = "truelch_ScorpionMech"
-	},
-	]]
 }
 
 Weapon_Texts.truelch_ScorpionAttack_Upgrade1 = "Extended spinneret"

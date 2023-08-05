@@ -23,6 +23,9 @@ Scorpion:
 - Finish the implementation of fake small steps:
 	- Set space one by one the pawns, BUT, still use the move, so the preview show something good
 
+Burrower:
+- I managed to deploy it in water. I should find a way to not authorize that. Maybe non-massive deploy lib?
+
 Bouncer:
 - Ice causes an issue with Bouncer's weapon: no damage will be dealt.
 	(in the case I throw a non frozen unit into one, don't know for the reversed situation)
@@ -33,16 +36,16 @@ Bouncer:
 - Networked Shielding seems to cause issues with this too...
 	(thrown a boulder into one of my mech, one of them took damage and the boulder and the Mech shares the same tile now)
 - Need to fix effects of the Bouncer's attack
-- The push back is actually done multiple times! That's explained the incorrect preview.
-	I've managed to destroy and go to the tile where there was a Boulder
 
+After modification:
+- It seems that throwing a shielded enemy into a webbing enemy will keep the web (error1)
+	Can I fix that?
 
-Burrower:
+- After putting nil when try to throw a Guarding (stable) pawn, I just can't attack stable pawns anymore! -> Seems to be fixed
+  We should be able to use the regular punch attack
 
-
-Misc:
 
 
 
 Trailer:
-- Musique d'Idra de In Uchronia
+- Soulblast, In Uchronia

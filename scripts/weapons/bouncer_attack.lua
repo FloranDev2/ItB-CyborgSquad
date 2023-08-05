@@ -4,7 +4,7 @@ local selfDmgCond
 truelch_BouncerAttack = Skill:new{
 	--Infos
 	Name = "Cyborg Horn",
-	Description = "Target an adjacent enemy, and move it with the Mech, damaging it",
+	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.\nThrow range: 2.",
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_bouncer_attack.png",
 
@@ -77,33 +77,119 @@ truelch_BouncerAttack_AB = truelch_BouncerAttack:new{
 	SelfDamage = 0,
 }
 
-function truelch_BouncerAttack:GetSkillEffect(p1, p2)
-	local ret = SkillEffect()
-	local damage = SpaceDamage(p2, 0)
-	local direction = GetDirection(p2 - p1)
-
-	if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then	
-		for i = 1, self.Range do
-			local curr = p2 + DIR_VECTORS[direction] * i
-			if Board:IsValid(curr) and Board:IsBlocked(curr, PATH_FLYER) then
-				local block_image = SpaceDamage(curr, 0)
-				block_image.sImageMark = "advanced/combat/icons/icon_throwblocked_glow.png" --TODO: we actually want to throw there
-				ret:AddDamage(block_image)
+function truelch_BouncerAttack:HasSquadNetworkShield()
+	for i = 0, 2 do
+		local mech = Board:GetPawn(i)
+		if mech ~= nil then --shouldn't be necessary, but we never know...
+			local weapons = mech:GetPoweredWeapons()
+			for j = 1, 2 do
+				if weapons[j] == "Passive_PlayerTurnShield" then
+					LOG("Passive_PlayerTurnShield!!!!!!!!!!!")
+					return true
+				end				
 			end
 		end
-	
-		local empty_spaces = self:GetSecondTargetArea(p1, p2)
-		if not empty_spaces:empty() then
-			damage.sImageMark = "advanced/combat/throw_"..direction..".png"
-			ret:AddMelee(p1, damage)
-			return ret
-		end
 	end
-	
-	--With the old weapon, we arrive here if there are no empty spaces
-	--But actually, we'd disable throw at the opposite condition: if all spaces are empty, we can't throw!
-	damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png" --TODO
-	ret:AddDamage(damage)
+	return false
+end
+
+function truelch_BouncerAttack:IsEdge(p1, p2)
+	local direction = GetDirection(p2 - p1)
+	local testP = p2 + DIR_VECTORS[direction]
+	return not Board:IsValid(testP)
+end
+
+function truelch_BouncerAttack:IsTwoClickException(p1, p2)
+	return self:IsEdge(p1, p2) or (Board:IsPawnSpace(p2) and Board:GetPawn(p2):IsGuarding()) --test
+end
+
+function truelch_BouncerAttack:PushAttack(ret, customP2, dir)
+	local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
+	spaceDamage.sAnimation = "SwipeClaw2"
+	spaceDamage.sSound = self.SoundBase.."/attack"
+	ret:AddDamage(spaceDamage)
+end
+
+function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay)
+	--LOG("ThrowAttack(isDelay: " .. tostring(isDelay) .. ")")
+
+	--Bounce and burst
+	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
+	ret:AddBounce(customP3, 4)
+
+	--Throw effect
+	local throwEffect = SpaceDamage(customP2, 0)
+	throwEffect.sImageMark = "advanced/combat/throw_"..dir..".png"
+	ret:AddDamage(throwEffect)
+	ret:AddBounce(customP2, -4)
+
+	--Leap
+	local move = PointList()
+	move:push_back(customP2)
+	move:push_back(customP3)
+	local delay = NO_DELAY
+	if isDelay then
+		--LOG(" -> FULL_DELAY!")
+		delay = FULL_DELAY
+	end
+	ret:AddLeap(move, delay)
+end
+
+function truelch_BouncerAttack:GetSkillEffect(p1, p2)
+	local ret = SkillEffect()
+	local direction = GetDirection(p2 - p1)
+
+	if not self:IsEdge(p1, p2) then
+		local damage = SpaceDamage(p2, 0)
+
+		--TODO: preview sweep?
+
+		if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then
+			for i = 1, self.Range do
+				local curr = p2 + DIR_VECTORS[direction] * i
+				if Board:IsValid(curr) and Board:IsBlocked(curr, PATH_FLYER) then
+					local block_image = SpaceDamage(curr, 0)
+					block_image.sImageMark = "advanced/combat/icons/icon_throwblocked_glow.png" --TODO: we actually want to throw there
+					ret:AddDamage(block_image)
+				end
+			end
+		
+			local empty_spaces = self:GetSecondTargetArea(p1, p2)
+			if not empty_spaces:empty() then
+				damage.sImageMark = "advanced/combat/throw_"..direction..".png"
+				ret:AddMelee(p1, damage)
+				return ret
+			end
+		end
+
+		--With the old weapon, we arrive here if there are no empty spaces
+		--But actually, we'd disable throw at the opposite condition: if all spaces are empty, we can't throw!
+		damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png" --TODO
+		ret:AddDamage(damage)
+	end	
+
+	--"ELSE" (pawn at p2 can be stable) - or we are at and edge
+	self:PushAttack(ret, p2, direction) --A
+	if self.Sweep then
+		--Offsets
+		local offset1 = DIR_VECTORS[(direction-1)%4] --B
+		local offset2 = DIR_VECTORS[(direction+1)%4] --C
+
+		--Adjacent to p2 (sweep)
+		local customP2B = p2 + offset1 --B
+		local customP2C = p2 + offset2 --C
+
+		--Push attack
+		self:PushAttack(ret, customP2B, direction) --B
+		self:PushAttack(ret, customP2C, direction) --C
+	end
+
+	--Move backwards
+	local dirback = GetDirection(p1 - p2)
+	local moveBack = SpaceDamage(p1, 0, dirback)
+	moveBack.sAnimation = "airpush_"..dirback
+	ret:AddDamage(moveBack)
+
 	return ret
 end
 
@@ -123,23 +209,23 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1, p2)
 	return ret
 end
 
-------------------------------------------------------------------------------------------
-
 --[[
 Need to take account of:
-- Ice
-- Passive that makes allied mechs invulnerable
-- What about pawns that leaves a corpse???
+- Ice (Done, need to test)
+	pawn:IsFrozen()
+- Shield (Done, need to test)
+	pawn:IsShield()
+- Network Shielding (Done, seems to work)
+	Passive_PlayerTurnShield
+- Stable pawns (Done, seems to work)
+- What about pawns that leaves a corpse??? (Done, need to test)
+	pawn:IsCorpse()
   -> Disable throwing a Mech or any pawn that leaves a corpse I guess
 - ACID????
 ]]
 function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
-	--LOG("ComputeDamage - A")
-
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
-
-	--LOG("ComputeDamage - B")
 
 	local dmg2 = self.Damage
 	if pawn3 ~= nil then
@@ -149,8 +235,6 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 		end
 	end
 
-	--LOG("ComputeDamage - C")
-
 	local dmg3 = self.Damage
 	if pawn2 ~= nil then
 		dmg3 = pawn2:GetHealth()
@@ -159,54 +243,69 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 		end
 	end
 
-	--LOG("ComputeDamage - D")
+	if pawn2 ~= nil and pawn3 ~= nil then
 
-	if pawn3 ~= nil and pawn2 ~= nil then
+		--Other verification here (with return)
+		if pawn2:IsCorpse() and pawn3:IsCorpse() then --Maybe unnecessary
+			return nil
+		end
+
+		--We only check for p2 ofc
+		--Wait, it's not supposed to make attack against stable pawns impossible! 
+		if pawn2:IsGuarding() then
+			return nil
+		end
+
 		selfDmgCond = true --THIS! DON'T FORGET ABOUT THIS!
-		if dmg2 < dmg3 then
-			--LOG("ComputeDamage -> return dmg2")
+
+		--TODO: don't enter here if both are frozen or shielded
+		if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
+			--LOG("Here!! (squad has network shield and at least one of the pawns is a mech)")
+			if pawn2:IsMech() and pawn3:IsMech() then --really... I guess we should still do this...
+				--LOG("Both pawns are mechs!")
+				return nil
+			elseif pawn2:IsMech() then
+				--LOG("pawn2 is the only mech")
+				--return dmg3
+				return dmg2 --test
+			elseif pawn3:IsMech() then
+				--LOG("pawn3 is the only mech")
+				--return dmg2
+				return dmg3 --test
+			else
+				--LOG("Uhh wtf??") --Should NOT happen. Right?
+			end
+
+		elseif pawn2:IsShield() or pawn2:IsFrozen() then
+			return dmg3
+		elseif pawn3:IsShield() or pawn3:IsFrozen() then
 			return dmg2
 		else
-			--LOG("ComputeDamage -> return dmg3")
-			return dmg3
+			return math.min(dmg2, dmg3)
 		end
 	else
-		--LOG("ComputeDamage -> return nil")
 		return nil
 	end
 end
 
-function truelch_BouncerAttack:PushAttack(ret, customP2, dir)
-	local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
-	spaceDamage.sAnimation = "SwipeClaw2"
-	spaceDamage.sSound = self.SoundBase.."/attack"
-	ret:AddDamage(spaceDamage)
-end
+function truelch_BouncerAttack:ComputeShieldAndIce(customP2, customP3)	
+	local pawn2 = Board:GetPawn(customP2)
+	local pawn3 = Board:GetPawn(customP3)
 
-function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay)
-	--Bounce and burst
-	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
-	ret:AddBounce(customP3, 4)
-
-	--Throw effect
-	local throwEffect = SpaceDamage(customP2, 0)
-	throwEffect.sImageMark = "advanced/combat/throw_"..dir..".png"
-	ret:AddDamage(throwEffect)
-	ret:AddBounce(customP2, -4)
-
-	--Leap
-	local move = PointList()
-	move:push_back(customP2)
-	move:push_back(customP3)
-	local delay = NO_DELAY
-	if isDelay then
-		delay = FULL_DELAY
+	if pawn2 == nil or pawn3 == nil then
+		return
 	end
-	ret:AddLeap(move, delay)
+
+	if (pawn2:IsFrozen() or pawn2:IsShield()) and (pawn3:IsFrozen() or pawn3:IsShield()) then
+		--TODO: AddScript
+		pawn2:SetShield(false)
+		pawn2:SetFrozen(false)
+		pawn3:SetShield(false)
+		pawn3:SetFrozen(false)
+	end
 end
 
 function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
-	LOG("GetFinalEffect - A")
 	--Vars init
 	selfDmgCond = false --THIS!
 
@@ -230,6 +329,13 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local dmgA = self:ComputeDamage(p2, p3)
 	local dmgB = self:ComputeDamage(customP2B, customP3B)
 	local dmgC = self:ComputeDamage(customP2C, customP3C)
+
+	--New (test): if both have shield / ice, remove both
+	truelch_BouncerAttack:ComputeShieldAndIce(p2, p3) --A
+	if self.Sweep then
+		truelch_BouncerAttack:ComputeShieldAndIce(customP2B, customP3B) --B
+		truelch_BouncerAttack:ComputeShieldAndIce(customP2C, customP3C) --C
+	end
 
 	--Pawns
 	local pawnA2 = Board:GetPawn(p2)
@@ -279,14 +385,14 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 
 	--Do all throw attacks (when applicable)
 	if dmgA ~= nil then
-		self:ThrowAttack(ret, p2, p3, dir, isDelay) --A
+		self:ThrowAttack(ret, p2, p3, dir, delayA) --A
 	end
 	if self.Sweep then
 		if dmgB ~= nil then
-			self:ThrowAttack(ret, customP2B, customP3B, dir, isDelay) --B
+			self:ThrowAttack(ret, customP2B, customP3B, dir, delayB) --B
 		end
 		if dmgC ~= nil then
-			self:ThrowAttack(ret, customP2C, customP3C, dir, isDelay) --C
+			self:ThrowAttack(ret, customP2C, customP3C, dir, delayC) --C
 		end
 	end
 

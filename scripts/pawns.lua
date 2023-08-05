@@ -67,7 +67,7 @@ local a = ANIMS
 a.truelch_mech_scorpion =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion.png",          PosX = -19, PosY = -12 }
 a.truelch_mech_scorpiona =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_a.png",        PosX = -24, PosY = -9, NumFrames = 4 }
 a.truelch_mech_scorpionw =			a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w.png",        PosX = -17, PosY = -7 }
-a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -19, PosY = -12 }
+a.truelch_mech_scorpion_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_broken.png",   PosX = -27, PosY = -12 }
 a.truelch_mech_scorpionw_broken =	a.MechUnit:new{ Image = "units/player/truelch_mech_scorpion_w_broken.png", PosX = -29, PosY = -8 }
 a.truelch_mech_scorpion_ns =		a.MechIcon:new{ Image = "units/player/truelch_mech_scorpion_ns.png", }
 
@@ -161,9 +161,9 @@ end
 local a = ANIMS
 a.truelch_mech_burrower =         a.MechUnit:new{ Image = "units/player/truelch_mech_burrower.png",          PosX = -18, PosY = -7 }
 a.truelch_mech_burrowera =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_a.png",        PosX = -18, PosY = -7, NumFrames = 4 }
-a.truelch_mech_burrowerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w.png",        PosX = -15, PosY =  4 }
+a.truelch_mech_burrowerw =        a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w.png",        PosX = -22, PosY =  10 }
 a.truelch_mech_burrower_broken =  a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_broken.png",   PosX = -18, PosY = -7 }
-a.truelch_mech_burrowerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w_broken.png", PosX = -15, PosY =  4 }
+a.truelch_mech_burrowerw_broken = a.MechUnit:new{ Image = "units/player/truelch_mech_burrower_w_broken.png", PosX = -22, PosY =  4 }
 a.truelch_mech_burrower_ns =      a.MechIcon:new{ Image = "units/player/truelch_mech_burrower_ns.png"}
 a.truelch_mech_burrowere =        a.MechIcon:new{ Image = "units/player/truelch_mech_burrower_emerge.png", PosX = -18, PosY = -7, Loop = false, NumFrames = 10, Time = .07}
 

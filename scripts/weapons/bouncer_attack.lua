@@ -111,8 +111,6 @@ function truelch_BouncerAttack:PushAttack(ret, customP2, dir)
 end
 
 function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay)
-	--LOG("ThrowAttack(isDelay: " .. tostring(isDelay) .. ")")
-
 	--Bounce and burst
 	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
 	ret:AddBounce(customP3, 4)
@@ -129,7 +127,6 @@ function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay
 	move:push_back(customP3)
 	local delay = NO_DELAY
 	if isDelay then
-		--LOG(" -> FULL_DELAY!")
 		delay = FULL_DELAY
 	end
 	ret:AddLeap(move, delay)
@@ -258,7 +255,6 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 
 		selfDmgCond = true --THIS! DON'T FORGET ABOUT THIS!
 
-		--TODO: don't enter here if both are frozen or shielded
 		if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
 			--LOG("Here!! (squad has network shield and at least one of the pawns is a mech)")
 			if pawn2:IsMech() and pawn3:IsMech() then --really... I guess we should still do this...
@@ -275,7 +271,10 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 			else
 				--LOG("Uhh wtf??") --Should NOT happen. Right?
 			end
-
+		elseif (pawn2:IsShield() or pawn2:IsFrozen()) and (pawn3:IsShield() or pawn3:IsFrozen()) then
+			--That can happen even with the compute before, because it happens simultaneously
+			--LOG("Both are frozen or shielded, but it's being removed, so we just do the normal computation")
+			return math.min(dmg2, dmg3)
 		elseif pawn2:IsShield() or pawn2:IsFrozen() then
 			return dmg3
 		elseif pawn3:IsShield() or pawn3:IsFrozen() then
@@ -288,7 +287,7 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 	end
 end
 
-function truelch_BouncerAttack:ComputeShieldAndIce(customP2, customP3)	
+function truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2, customP3)	
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -297,11 +296,10 @@ function truelch_BouncerAttack:ComputeShieldAndIce(customP2, customP3)
 	end
 
 	if (pawn2:IsFrozen() or pawn2:IsShield()) and (pawn3:IsFrozen() or pawn3:IsShield()) then
-		--TODO: AddScript
-		pawn2:SetShield(false)
-		pawn2:SetFrozen(false)
-		pawn3:SetShield(false)
-		pawn3:SetFrozen(false)
+		ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
+		ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
+		ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
+		ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
 	end
 end
 
@@ -325,17 +323,23 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local customP3B = p3 + offset1 --B
 	local customP3C = p3 + offset2 --C
 
+	--New (test): if both have shield / ice, remove both
+	truelch_BouncerAttack:ComputeShieldAndIce(ret, p2, p3) --A
+	if self.Sweep then
+		truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2B, customP3B) --B
+		truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2C, customP3C) --C
+	end
+
 	--Damages for throw. If nil, the throw is not possible.
 	local dmgA = self:ComputeDamage(p2, p3)
 	local dmgB = self:ComputeDamage(customP2B, customP3B)
 	local dmgC = self:ComputeDamage(customP2C, customP3C)
 
-	--New (test): if both have shield / ice, remove both
-	truelch_BouncerAttack:ComputeShieldAndIce(p2, p3) --A
-	if self.Sweep then
-		truelch_BouncerAttack:ComputeShieldAndIce(customP2B, customP3B) --B
-		truelch_BouncerAttack:ComputeShieldAndIce(customP2C, customP3C) --C
-	end
+	--LOG("dmgA: " .. tostring(dmgA))
+	--LOG("dmgB: " .. tostring(dmgB))
+	--LOG("dmgC: " .. tostring(dmgC))
+
+	--If I put the ice / shield stuff here, they'll take the wrong amount of dmg
 
 	--Pawns
 	local pawnA2 = Board:GetPawn(p2)
@@ -395,6 +399,8 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 			self:ThrowAttack(ret, customP2C, customP3C, dir, delayC) --C
 		end
 	end
+
+	--I tried to disable shield and ice here, but it worked only on one pawn
 
 	--Final damages for throw attacks (after delay)
 	if dmgA ~= nil then

@@ -1,4 +1,4 @@
-Burrower boss had a pretty dope design honestly
+"Burrower boss had a pretty dope design honestly"
 
 Web immunity -> Secret Squad II -> pawns.lua
 The trait is on the pilots.lua file iirc
@@ -9,10 +9,6 @@ Unfair tweaks by arro -> nano mech's weapon
 
 Move:
 https://discord.com/channels/417639520507527189/1062451817918767134/1118976718393311315
-
-
-
-
 
 
 TODO:
@@ -29,20 +25,18 @@ Burrower:
 Bouncer:
 - Ice causes an issue with Bouncer's weapon: no damage will be dealt.
 	(in the case I throw a non frozen unit into one, don't know for the reversed situation)
-- Bouncer's weapon allows to damage an enemy by with a stable enemy. The stable unit IS NOT thrown
-	(and not damaged since it doesn't reach P3).
-- When Sweep attack is upgraded, the preview of the self damage is wrong.
-- Also, each attacked tile as a delay
-- Networked Shielding seems to cause issues with this too...
-	(thrown a boulder into one of my mech, one of them took damage and the boulder and the Mech shares the same tile now)
-- Need to fix effects of the Bouncer's attack
+- Networked Shielding seems to cause issues with this too... -> fixed?
+- Need to fix effects of the Bouncer's attack -> fixed?
 
-After modification:
-- It seems that throwing a shielded enemy into a webbing enemy will keep the web (error1)
+- It seems that throwing a shielded enemy into a webbing enemy will keep the web
 	Can I fix that?
 
-- After putting nil when try to throw a Guarding (stable) pawn, I just can't attack stable pawns anymore! -> Seems to be fixed
-  We should be able to use the regular punch attack
+
+- I threw a blob into a Blobber and none of them took damage. 
+
+
+
+
 
 
 

@@ -312,7 +312,7 @@ end
 truelch_ScorpionAttack = Skill:new{
 	--Infos
 	Name = "Entangling Spinneret",
-	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.",
+	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.\nTo use it, hover over the desired targets and click on your own Mech to validate.\nThen, draw the path by moving the mouse over the desired tiles. (max: 4 tiles)",
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_scorpion_attack.png",
 

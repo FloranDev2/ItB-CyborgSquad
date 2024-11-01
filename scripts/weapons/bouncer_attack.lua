@@ -111,6 +111,7 @@ function truelch_BouncerAttack:PushAttack(ret, customP2, dir)
 end
 
 function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay)
+	--LOG("TRUELCH ThrowAttack(customP2: " .. customP2:GetString() .. ", customP3: " .. customP2:GetString() .. ")")
 	--Bounce and burst
 	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
 	ret:AddBounce(customP3, 4)
@@ -202,6 +203,8 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1, p2)
 		local curr = p2 + DIR_VECTORS[direction] * i
 		ret:push_back(curr)
 	end
+
+	ret:push_back(p1)
 	
 	return ret
 end
@@ -221,6 +224,7 @@ Need to take account of:
 - ACID????
 ]]
 function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
+	--LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -280,6 +284,7 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 		elseif pawn3:IsShield() or pawn3:IsFrozen() then
 			return dmg2
 		else
+			--LOG(" ---> Should reach here!!! dmg: " .. tostring(math.min(dmg2, dmg3)))
 			return math.min(dmg2, dmg3)
 		end
 	else
@@ -410,7 +415,7 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 		if dmgB ~= nil then
 			ret:AddDamage(SpaceDamage(customP3B, dmgB)) --B
 		end
-		if dmC ~= nil then
+		if dmgC ~= nil then
 			ret:AddDamage(SpaceDamage(customP3C, dmgC)) --C
 		end
 	end

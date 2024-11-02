@@ -4,7 +4,7 @@ local selfDmgCond
 truelch_BouncerAttack = Skill:new{
 	--Infos
 	Name = "Cyborg Horn",
-	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.\nThrow range: 2.",
+	Description = "Throw a unit into another, each unit taking an amount of damage equal to the hit points of the other, and self-damage the Mech.\nIf there is no enemy in the destination, damage and push the target instead.\nPush the Mech backwards in any case.\nThrow range: 2.",
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_bouncer_attack.png",
 
@@ -32,8 +32,10 @@ truelch_BouncerAttack = Skill:new{
 	TipImage = {
 		Unit = Point(2, 3),
 		Enemy = Point(2, 2),
-		Enemy2 = Point(2, 0),		
+		Enemy2 = Point(2, 0),
+		Enemy3 = Point(1, 2),
 		Target = Point(2, 2),
+		Building = Point(3, 2),
 		Second_Click = Point(2, 0),
 
 		--Enemy3 = Point(1, 3),
@@ -43,7 +45,7 @@ truelch_BouncerAttack = Skill:new{
 
 		--Enemy_Damaged = Point(2, 2),
 
-		CustomPawn = "truelch_BouncerMech"
+		CustomPawn = "truelch_BouncerMech",
 	}
 }
 
@@ -68,7 +70,7 @@ truelch_BouncerAttack_A = truelch_BouncerAttack:new{
 }
 
 truelch_BouncerAttack_B = truelch_BouncerAttack:new{
-	UpgradeDescription = "The Mech doesn't take self damage anymore.",
+	UpgradeDescription = "The Mech doesn't take self-damage anymore.",
 	SelfDamage = 0,
 }
 
@@ -84,7 +86,7 @@ function truelch_BouncerAttack:HasSquadNetworkShield()
 			local weapons = mech:GetPoweredWeapons()
 			for j = 1, 2 do
 				if weapons[j] == "Passive_PlayerTurnShield" then
-					LOG("Passive_PlayerTurnShield!!!!!!!!!!!")
+					--LOG("Passive_PlayerTurnShield!!!!!!!!!!!")
 					return true
 				end				
 			end

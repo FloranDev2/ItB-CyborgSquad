@@ -100,8 +100,8 @@ end
 
 --------------------------------------------------- Phase 1: add / remove targets
 --Phase 1: add / remove targets
-local function debugTargets()
-	local str = "debugTargets() - Path Offsets list (count: " .. tostring(#targets) .. "):"
+local function debugPathOffsets()
+	local str = "debugPathOffsets(count: " .. tostring(#pathOffsets) .. "):"
     for _,v in pairs(pathOffsets) do
         str = str .. "\n" .. v:GetString()
     end
@@ -130,7 +130,7 @@ local function computeTarget(p1, p2, max)
 		local index = containTarget(pawn) -- -1 => "false" / else => true
 		if index == -1 then
 	    	--Is count ok?
-		    LOG("targets count: " .. tostring(#targets))
+		    --LOG("targets count: " .. tostring(#targets))
 		    if #targets < max then
 				--does not contain -> we add it
 				table.insert(targets, pawn)
@@ -206,15 +206,6 @@ end
 
 modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
 
-
-local function debugPathOffsets()
-	local str = "debugPathOffsets() - pathOffsets (count: " .. tostring(#pathOffsets) .. "):"
-    for _,v in pairs(pathOffsets) do
-        str = str .. "\n" .. v:GetString()
-    end
-    LOG(str)
-end
-
 local function isPointAlreadyInTheList(p)
     for _, offset in pairs(pathOffsets) do
         if offset == p then
@@ -272,8 +263,16 @@ end
 
 --TODO: trim if we find an offset we already had
 local function tryAddOffset(p1, p3, max)
+
 	local offset = p3 - p1
 	local isOk = true
+
+	--LOG("tryAddOffset(p1: " .. p1:GetString() .. ", p3: " .. p3:GetString() .. ") -> offset: " .. offset:GetString())
+
+	if offset == Point(0, 0) then
+		--LOG(" -> here!")
+		isOk = false
+	end
 
 	--Check if not already in the list! (new)
 	isOk = isOk and not isPointAlreadyInTheList(pathOffsets, offset)
@@ -286,9 +285,11 @@ local function tryAddOffset(p1, p3, max)
     --Also need to be ok for player
     isOk = isOk and isOffsetFromStartPosOk(p1, p1, offset)
 
+    
+
     --Max distance?
     if #pathOffsets >= max then
-    	--LOG("\n\nCan't add point, the path reached its maximum size!")
+    	--LOG("Can't add point, the path reached its maximum size!")
     	isOk = false
     end
 
@@ -303,6 +304,8 @@ local function tryAddOffset(p1, p3, max)
 
 	--Trim
 	trim(offset)
+
+	--debugPathOffsets()
 end
 
 
@@ -312,7 +315,7 @@ end
 truelch_ScorpionAttack = Skill:new{
 	--Infos
 	Name = "Entangling Spinneret",
-	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.\nTo use it, hover over the desired targets and click on your own Mech to validate.\nThen, draw the path by moving the mouse over the desired tiles. (max: 4 tiles)",
+	Description = "Target an adjacent enemy, and move it with the Mech, damaging it.\nTo use it, hover over the desired targets and click on your own Mech to validate.\nThen, draw the path by moving the mouse over the desired tiles. (max: 3 tiles, +1 / upgrade)",
 	Class = "TechnoVek",
 	Icon = "weapons/truelch_scorpion_attack.png",
 
@@ -337,7 +340,7 @@ truelch_ScorpionAttack = Skill:new{
 	MinTargets = 0, --1
 	--Upgrade people, upgrade!
 	MaxTargets = 1, --1
-	MaxDistance = 4, --max size of the offsets list basically
+	MaxDistance = 3, --max size of the offsets list basically
 
 	--Tip image
 	CustomTipImage = "truelch_ScorpionAttack_Tip",
@@ -347,19 +350,22 @@ Weapon_Texts.truelch_ScorpionAttack_Upgrade1 = "Extended spinneret"
 Weapon_Texts.truelch_ScorpionAttack_Upgrade2 = "+1 Damage"
 
 truelch_ScorpionAttack_A = truelch_ScorpionAttack:new{
-	UpgradeDescription = "Can target any adjacent target.",
+	UpgradeDescription = "Can target any adjacent target.\n+1 range max.",
 	MaxTargets = 4,
+	MaxDistance = 4,
 	CustomTipImage = "truelch_ScorpionAttack_Tip_A",
 }
 
 truelch_ScorpionAttack_B = truelch_ScorpionAttack:new{
-	UpgradeDescription = "Increases damage by 1.",
+	UpgradeDescription = "Increases damage by 1.\n+1 range max.",
 	Damage = 2,
+	MaxDistance = 4,
 	CustomTipImage = "truelch_ScorpionAttack_Tip_B",
 }
 
 truelch_ScorpionAttack_AB = truelch_ScorpionAttack:new{
 	MaxTargets = 4,
+	MaxDistance = 5,
 	Damage = 2,
 	CustomTipImage = "truelch_ScorpionAttack_Tip_AB",
 }
@@ -464,46 +470,6 @@ function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
 	end
 	
 	--Return
-	return ret
-end
-
---Teleport for each step (attempt fix 5: do like the diagonal move in KnightMiner's chess pawns)
---Not working (yet)
---[[
--- add sound effect
-local pawnType = Pawn:GetType()
-ret:AddSound(_G[pawnType].SoundLocation .. "move")
-ret:AddDelay(0.1)
-]]
-function truelch_ScorpionAttack:GetFinalEffectTest(p1, p2, p3)
-	local ret = SkillEffect()
-	local direction = GetDirection(p3 - p2)
-
-	--Not sure where to put that
-	tryAddOffset(p1, p3, self.MaxDistance)
-	
-	--Damage first
-    for i, target in pairs(targets) do
-    	local spaceDamage = SpaceDamage(target:GetSpace(), self.Damage)
-	    ret:AddDamage(spaceDamage)
-    end
-
-    for j, offset in pairs(pathOffsets) do
-        --Player
-        local curr = p1 + offset
-        ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", p1:GetString(), curr:GetString()))
-
-        --Enemies
-        for i, target in pairs(targets) do
-        	local curr = target:GetSpace() + offset
-        	ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", target:GetSpace():GetString(), curr:GetString()))
-        end
-
-        --Delay
-        ret:AddDelay(1)
-    end
-
-    --Ret
 	return ret
 end
 

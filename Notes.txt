@@ -55,6 +55,8 @@ Description:
 Somewhere, in a distant timeline, the secret cyborg project has taken a completely different turn...
 
 
+Idea: remove smoke after move if weapons are both upgraded (at least for burrower, but maybe for all mechs)
+
 
 
 Trailer:

@@ -339,8 +339,16 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 
 	--Damages for throw. If nil, the throw is not possible.
 	local dmgA = self:ComputeDamage(p2, p3)
-	local dmgB = self:ComputeDamage(customP2B, customP3B)
-	local dmgC = self:ComputeDamage(customP2C, customP3C)
+
+	local dmgB = nil
+	if self.Sweep then
+		dmgB = self:ComputeDamage(customP2B, customP3B)
+	end
+
+	local dmgC = nil
+	if self.Sweep then
+		dmgC = self:ComputeDamage(customP2C, customP3C)
+	end
 
 	--LOG("dmgA: " .. tostring(dmgA))
 	--LOG("dmgB: " .. tostring(dmgB))
@@ -363,12 +371,18 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local delayB = false
 	local delayC = false
 
-	if dmgC ~= nil then
-		delayC = true
-	elseif dmgB ~= nil then
-		delayB = true
-	elseif dmgA ~= nil then
+	if dmgA ~= nil then
 		delayA = true
+	end
+
+	if self.Sweep then
+		if dmgB ~= nil then
+			delayB = true
+		end
+
+		if dmgC ~= nil then
+			delayC = true
+		end
 	end
 
 	--Self damage and push back	

@@ -1,3 +1,6 @@
+--I'm removing crack from the weapon; I couldn't undo the crack after undoing move
+--And it's not what the squad really needed anyway...
+
 local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
 	local isCrack = false
     local weapons = pawn:GetPoweredWeapons()
@@ -13,28 +16,26 @@ local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
 		end
 	end
 
+
 	if weaponId == "Move" and isCrack then
 		local crack = SpaceDamage(p1, 0)
 		crack.iCrack = EFFECT_CREATE
-
-		LOG("EFFECT_CREATE: " .. tostring(EFFECT_CREATE))
-
-		if EFFECT_REMOVE ~= nil then
-			LOG("EFFECT_REMOVE: " .. tostring(EFFECT_REMOVE))
-		else
-			LOG("EFFECT_REMOVE is nil!")
-		end
 		
 		Board:AddEffect(crack)
 	end
 end
 
+--undone position is origin pos
 local HOOK_onPawnUndoMove = function(mission, pawn, undonePosition)
-	--LOG("HOOK_onPawnUndoMove(undonePosition: " .. undonePosition:GetString() .. ", pawn pos: " .. pawn:GetSpace():GetString() .. ")")
-	--local crack = SpaceDamage(undonePosition, 0)
-	local crack = SpaceDamage(pawn:GetSpace(), 0)
-	crack.iCrack = EFFECT_REMOVE
-	Board:AddEffect(crack)
+	--Test 1: doesn't work
+	--local crack = SpaceDamage(pawn:GetSpace(), 0)
+	--crack.iCrack = EFFECT_REMOVE
+	--Board:AddEffect(crack)
+
+	--Test 2: what's the 2nd int param? Anyway, it doesn't work either...
+	--Board:SetHealth(pawn:GetSpace(), 2, 2)
+
+	Board:SetCracked(pawn:GetSpace(), false) --thx Lemonymous!
 end
 
 local function EVENT_onModsLoaded()
@@ -54,8 +55,8 @@ truelch_BurrowerAttack = Skill:new{
 	--Shop
 	Rarity = 1,
 	PowerCost = 0,
-	Upgrades = 2,
-	UpgradeCost = { 1, 2 },
+	Upgrades = 1,
+	UpgradeCost = { --[[1,]] 2 },
 
 	--Gameplay
 	Damage = 2,
@@ -83,8 +84,10 @@ truelch_BurrowerAttack = Skill:new{
 	}
 }
 
+
 Weapon_Texts.truelch_BurrowerAttack_Upgrade1 = "Crack"
 Weapon_Texts.truelch_BurrowerAttack_Upgrade2 = "Confuse"
+
 
 truelch_BurrowerAttack_A = truelch_BurrowerAttack:new{
 	UpgradeDescription = "Crack starting tile when moving and tiles affected by the attack that are inoccupied.",
@@ -172,22 +175,13 @@ function truelch_BurrowerAttack:BuildingEffect(ret, p2)
 		local curr = p2 + DIR_VECTORS[dir]
 		local push = SpaceDamage(curr, 0, dir)
 		push.sAnimation = "airpush_"..dir
+
 		if self.Crack == true then
 			truelch_ComputeCrack(curr, push)
 		end
 
 		ret:AddDamage(push)
 		ret:AddBounce(curr, 2)
-
-
-		--We don't want that actually
-		--[[
-		if self.Confuse == false then
-
-		else
-
-		end
-		]]
 	end
 
 	ret:AddDelay(0.2)

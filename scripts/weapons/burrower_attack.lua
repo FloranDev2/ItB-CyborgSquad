@@ -55,8 +55,8 @@ truelch_BurrowerAttack = Skill:new{
 	--Shop
 	Rarity = 1,
 	PowerCost = 0,
-	Upgrades = 1,
-	UpgradeCost = { --[[1,]] 2 },
+	Upgrades = 2,
+	UpgradeCost = { 1, 2 },
 
 	--Gameplay
 	Damage = 2,

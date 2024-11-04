@@ -1,9 +1,0 @@
-Proposed changes:
-- Extended spinneret is too weak -> buff: ⁠Truelch's mods⁠
-- Use Pawn:Kill() for the pawn that's supposed to be killed to fix the web problem
-
-Generic's suggestions:
-- Add a palette for the scorpion and bouncer which resembles their boss equivalent
-- Change the icon of the scorpion's weapon to resemble the boss' weapon
-- If you want, make an option that changes the sprites from leader to normal vek
-- If you want, add a palette for the volatile scorpion

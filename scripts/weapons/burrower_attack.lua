@@ -1,7 +1,25 @@
 --I'm removing crack from the weapon; I couldn't undo the crack after undoing move
 --And it's not what the squad really needed anyway...
 
-local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
+local function missionData()
+	local mission = GetCurrentMission()
+
+	if mission.truelch_TruelchCyborgs == nil then
+		mission.truelch_TruelchCyborgs = {}
+	end
+
+	if mission.truelch_TruelchCyborgs.burrowerCrack == nil then
+		mission.truelch_TruelchCyborgs.burrowerCrack = {} --should be named "shouldUncrack" or something
+		for i = 0, 2 do
+			mission.truelch_TruelchCyborgs.burrowerCrack[i] = false
+		end
+	end
+
+	return mission.truelch_TruelchCyborgs
+end
+
+--Is the Burrower weapon with crack upgrade powered
+local function isCrack(pawn)
 	local isCrack = false
     local weapons = pawn:GetPoweredWeapons()
 
@@ -15,7 +33,48 @@ local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
 			isCrack = true
 		end
 	end
+	return isCrack
+end
 
+
+--[[
+GetTerrain(point) results:
+0: Ground (cracked or not) / Conveyor Belt / Train's road
+1: Building (regardless of HP and type of Building; electric plant return 1 for example)
+2. ????
+3: Water (also ACID water)
+4: Mountain
+5: Frozen Water / Damaged Ice Water (but Damaged Ice Water doesn't return true for IsCracked)
+6: Forest
+7: Sand tile
+8: ????
+9: Chasm
+]]
+--Is authorized terrain for cracking?
+--For example, we actually don't want to crack (frozen) water
+--Authorized: Ground (0), Forest (6), Sand Tile (7), ...
+--There must something somewhere that has the terrain values, but I found them manually:
+--Note: I might need to add some custom terrain like the spores from Into the Wild or rocks from tosx' island
+--What about road tile? (that's mostly unused??)
+local authCrackTerr =
+{
+	0, --Ground
+	6, --Forest
+	7  --Sand Tile
+}
+local function isAuthorizedTerrain(terrainId)
+	for _,v in pairs(authCrackTerr) do
+		if v == terrainId then
+			return true
+		end
+	end
+	return false
+end
+
+local HOOk_onSkillStart = function(mission, pawn, weaponId, p1, p2)
+	local isCrack = isCrack(pawn)
+
+	--TODO: when turn starts, register (in missionData so that it's saved when exiting the game) all cracked tiles
 
 	if weaponId == "Move" and isCrack then
 		local crack = SpaceDamage(p1, 0)
@@ -35,12 +94,57 @@ local HOOK_onPawnUndoMove = function(mission, pawn, undonePosition)
 	--Test 2: what's the 2nd int param? Anyway, it doesn't work either...
 	--Board:SetHealth(pawn:GetSpace(), 2, 2)
 
-	Board:SetCracked(pawn:GetSpace(), false) --thx Lemonymous!
+	--LOG("TRUELCH --- HOOK_onPawnUndoMove -> Loop:")
+
+	local isOk = false
+	for i = 0, 2 do
+		--LOG("TRUELCH --- i: " .. tostring(i))
+		--LOG("TRUELCH --- burrowerCrack: " .. tostring(missionData().burrowerCrack[i]))
+		--Board:GetPawn(i) == pawn doesn't work, so let's compare with the unique ids
+		if Board:GetPawn(i):GetId() == pawn:GetId() and missionData().burrowerCrack[i] == true then
+			--LOG("TRUELCH --- ---> isOk!")
+			isOk = true
+		end
+	end
+
+	--Woops, I basically forgot all the verifications, thx Pilot_Arrogant for noticing it!
+	if isCrack(pawn) and isOk then
+		Board:SetCracked(pawn:GetSpace(), false) --thx Lemonymous!
+	end
+end
+
+local HOOK_onNextTurn = function(mission)
+	--LOG("TRUELCH --- Currently it is turn of team: " .. Game:GetTeamTurn())
+
+	if Game:GetTeamTurn() == TEAM_PLAYER then
+		--LOG("TRUELCH --- here")
+
+		--go through all Mechs
+		--if they possess Burrower's Weapon with crack upgrade, check if		
+		--We want to crack only if it's ground underneath (or forest or sand tile, ...), frozen water cracking is not what I wanted and will be a pain to restore
+		for i = 0, 2 do
+			local mech = Board:GetPawn(i)
+			if isCrack(mech)
+				and Board:IsCracked(mech:GetSpace()) == false
+				and isAuthorizedTerrain(Board:GetTerrain(mech:GetSpace())) then
+				--Need to check
+				--LOG("TRUELCH --- conditions are met!")
+				missionData().burrowerCrack[i] = true
+				--LOG("TRUELCH --- (after)")
+			else
+				--LOG("TRUELCH --- conditions are NOT met!")
+				missionData().burrowerCrack[i] = false
+				--LOG("TRUELCH --- (after)")
+			end
+
+		end
+	end
 end
 
 local function EVENT_onModsLoaded()
 	modapiext:addSkillStartHook(HOOk_onSkillStart)
 	modapiext:addPawnUndoMoveHook(HOOK_onPawnUndoMove)
+	modApi:addNextTurnHook(HOOK_onNextTurn)
 end
 
 modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
@@ -112,7 +216,18 @@ end
 
 function truelch_BurrowerAttack:GetTargetArea(point)
 	local ret = PointList()
+
+	--Debug shit
+	--[[
+	for j = 0, 7 do
+		for i = 0, 7 do
+			local curr = Point(i, j)
+			ret:push_back(curr)
+		end
+	end
+	]]
 	
+	--Regular stuff
 	for dir = DIR_START, DIR_END do
 		local curr = Point(point + DIR_VECTORS[dir])
 		ret:push_back(curr)
@@ -194,6 +309,10 @@ end
 
 function truelch_BurrowerAttack:GetSkillEffect(p1, p2)
 	local ret = SkillEffect()
+
+	--LOG("TRUELCH --- terrain at: " .. p2:GetString() .. " is: " .. tostring(Board:GetTerrain(p2)))
+	--LOG("TRUELCH --- is craked? -> " .. tostring(Board:IsCracked(p2)))	
+	--https://github.com/itb-community/ITB-ModLoader/wiki/%5BVanilla%5D-Board#IsCracked
 
 	if Board:IsBuilding(p2) then
 		self:BuildingEffect(ret, p2)

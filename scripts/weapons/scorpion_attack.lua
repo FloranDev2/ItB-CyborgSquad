@@ -615,15 +615,16 @@ truelch_ScorpionAttack_Tip = truelch_ScorpionAttack:new{
 	TwoClick = false,
 	TipImgPathOffsets = {
 		Point(0, -1),
-		Point(1, -1), --Point(1, 0),
+		Point(1, -1),
+		Point(2, -1),
 	},
 	TipImgTgtPos = {
-		Point(2, 2),
+		Point(1, 2),
 	},
 	TipImage = {
-		Unit = Point(2, 3),
-		Target = Point(2, 2),
-		Enemy = Point(2, 2),
+		Unit   = Point(1, 3),
+		Target = Point(1, 2),
+		Enemy  = Point(1, 2),
 		CustomPawn = "truelch_ScorpionMech"
 	},
 }
@@ -631,38 +632,57 @@ truelch_ScorpionAttack_Tip = truelch_ScorpionAttack:new{
 truelch_ScorpionAttack_Tip_A = truelch_ScorpionAttack_Tip:new{
 	MaxTargets = 4,
 	TipImgTgtPos = {
-		Point(2, 2),
-		Point(1, 3),
-		Point(3, 3),
+		Point(1, 2),
+		Point(0, 3),
+		Point(2, 3),
+	},
+	TipImgPathOffsets = {
+		Point(0, -1),
+		Point(1, -1),
+		Point(2, -1),
+		Point(2, -2),
 	},
 	TipImage = {
-		Unit = Point(2, 3),
-		Target = Point(2, 2),
-		Enemy  = Point(2, 2),
-		Enemy2 = Point(1, 3),
-		Enemy3 = Point(3, 3),
+		Unit   = Point(1, 3),
+		Target = Point(1, 2),
+		Enemy  = Point(1, 2),
+		Enemy2 = Point(0, 3),
+		Enemy3 = Point(2, 3),
 		CustomPawn = "truelch_ScorpionMech"
 	},
 }
 
 truelch_ScorpionAttack_Tip_B = truelch_ScorpionAttack_Tip:new{
 	Damage = 2,
+	TipImgPathOffsets = {
+		Point(0, -1),
+		Point(1, -1),
+		Point(2, -1),
+		Point(2, -2),
+	},
 }
 
 truelch_ScorpionAttack_Tip_AB = truelch_ScorpionAttack_Tip:new{
 	MaxTargets = 4,
 	Damage = 2,
 	TipImgTgtPos = {
-		Point(2, 2),
-		Point(1, 3),
-		Point(3, 3),
+		Point(1, 2),
+		Point(0, 3),
+		Point(2, 3),
+	},
+	TipImgPathOffsets = {
+		Point(0, -1),
+		Point(1, -1),
+		Point(2, -1),
+		Point(2, -2),
+		Point(3, -2),
 	},
 	TipImage = {
-		Unit = Point(2, 3),
-		Target = Point(2, 2),
-		Enemy  = Point(2, 2),
-		Enemy2 = Point(1, 3),
-		Enemy3 = Point(3, 3),
+		Unit   = Point(1, 3),
+		Target = Point(1, 2),
+		Enemy  = Point(1, 2),
+		Enemy2 = Point(0, 3),
+		Enemy3 = Point(2, 3),
 		CustomPawn = "truelch_ScorpionMech"
 	},
 }
@@ -690,7 +710,12 @@ function truelch_ScorpionAttack_Tip:GetSkillEffect(p1, p2)
 	        local curr = target:GetSpace() + offset
 	        move:push_back(curr)
 	    end
-	    ret:AddLeap(move, NO_DELAY)
+	    --ret:AddLeap(move, NO_DELAY)
+	    local fx = SkillEffect()
+		fx:AddLeap(move, NO_DELAY)
+		local sd = fx.effect:back()
+		sd.bHidePath = true
+		ret.effect:push_back(sd)
     end
 
     --Apply move to self

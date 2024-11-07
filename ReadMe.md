@@ -1,4 +1,4 @@
-# Truelch's Cyborg Squad (v1.0.0)
+# Truelch's Cyborg Squad (v1.0.2)
 
 I'm finally releasing this squad, that was supposed to bring me back to modding some months (years?) ago.
 All feedback is welcome, especially to squish these pesky Vek, I mean bugs!

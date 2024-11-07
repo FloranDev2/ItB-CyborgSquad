@@ -28,5 +28,13 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 
 ## Versions
 
+### v1.0.2
+- Fixed Scorpion's weapon logic for the path creation
+- Added to the Burrower's weapon's description that it won't crack frozen water
+- Changed squad's icon to fit with palette
+
+### v1.0.1
+- Fixed undo move removing crack all the time (was needed for Burrower's weapon crack upgrade)
+
 ### v1.0.0
 Release! There's no achievements yet, but apart from that, the squad is mostly ready.

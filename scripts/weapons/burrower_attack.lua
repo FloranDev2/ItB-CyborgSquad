@@ -194,7 +194,7 @@ Weapon_Texts.truelch_BurrowerAttack_Upgrade2 = "Confuse"
 
 
 truelch_BurrowerAttack_A = truelch_BurrowerAttack:new{
-	UpgradeDescription = "Crack starting tile when moving and tiles affected by the attack that are inoccupied.",
+	UpgradeDescription = "Crack starting tile when moving and tiles affected by the attack that are inoccupied.\nNote: moving from frozen water won't crack it!",
 	Crack = true,
 }
 
@@ -313,6 +313,9 @@ function truelch_BurrowerAttack:GetSkillEffect(p1, p2)
 	--LOG("TRUELCH --- terrain at: " .. p2:GetString() .. " is: " .. tostring(Board:GetTerrain(p2)))
 	--LOG("TRUELCH --- is craked? -> " .. tostring(Board:IsCracked(p2)))	
 	--https://github.com/itb-community/ITB-ModLoader/wiki/%5BVanilla%5D-Board#IsCracked
+
+	--Test before writting stuff on the wiki
+	--Board:SetHealth(p2, 1, 4)
 
 	if Board:IsBuilding(p2) then
 		self:BuildingEffect(ret, p2)

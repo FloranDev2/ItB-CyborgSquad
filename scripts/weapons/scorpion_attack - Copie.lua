@@ -30,6 +30,7 @@ local a = ANIMS
 --34x23
 a.truelch_hold_front = Animation:new {
 	Image = "effects/hold_front.png",
+	--Image = "combat/icons/movearrow_u.png", --just to test
 	NumFrames = 1,
 	Time = 0.19,
 	PosX = -17,
@@ -50,8 +51,37 @@ a.truelch_hold_back = Animation:new {
 }
 
 
+--TEST
+--[[
+modApi:appendAsset("img/combat/icons/truelch_test_path.png", resourcePath.."img/combat/icons/truelch_test_path.png")
+	Location["combat/icons/truelch_test_path.png"] = Point(-21, 4)
+
+a.truelch_test_path = Animation:new {
+	Image = "combat/icons/truelch_test_path.png",
+	--Image = "combat/icons/movearrow_u.png", --just to test
+	NumFrames = 1,
+	Time = 0.19,
+	PosX = -17,
+	PosY = 12,
+	Loop = true,
+	Layer = ANIMS.LAYER_FRONT,
+}
+]]
+
+--Maybe I'll add some fade in / out, but that sounds like a pain in the butt
+--[[
+local function addHold(point)
+end
+
+local function removeHold(point)
+end
+]]
+
+
 --------------------------------------------------- VARS
 local targets = {}
+local previousPoint
+local previousOffset
 local pathOffsets = {}
 
 
@@ -78,8 +108,25 @@ local function clear()
     end
 
 	--Clear offsets and targets
-	targets = {}
 	pathOffsets = {}
+	targets = {}
+
+	--Other clear
+	previousPoint = nil
+	previousOffset = nil
+end
+
+local function clearPathEffects()
+    for j = 0, 7 do
+    	for i = 0, 7 do
+			customAnim:rem(Point(i, j), "truelch_test_path")
+    	end
+    end
+end
+
+local function addPathEffect(point)
+	LOG("TRUELCH --- addPathEffect(" .. point:GetString() .. ")")
+	customAnim:add(point, "truelch_test_path")
 end
 
 
@@ -135,6 +182,14 @@ local function computeTarget(p1, p2, max)
 	end
 end
 
+--[[
+local function onWeaponArmed(weapon, pawnId)
+	LOGF("Pawn id %s armed weapon %s", tostring(pawnId), tostring(weapon.__Id))
+end
+
+weaponArmed.events.onWeaponArmed:subscribe(onWeaponArmed)
+]]
+
 local function onWeaponUnarmed(weapon, pawnId)
 	--LOGF("Pawn id %s unarmed weapon %s", tostring(pawnId), tostring(weapon.__Id))
 
@@ -169,6 +224,7 @@ local HOOK_finalEffectEnd = function(mission, pawn, weaponId, p1, p2, p3)
 end
 
 local function EVENT_onModsLoaded()
+	--LOG("EVENT_onModsLoaded()")
 	modapiext:addFinalEffectEndHook(HOOK_finalEffectEnd)
 
 	--test
@@ -181,6 +237,15 @@ local function EVENT_onModsLoaded()
 end
 
 modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
+
+local function isPointAlreadyInTheList(p)
+    for _, offset in pairs(pathOffsets) do
+        if offset == p then
+        	return true
+        end
+    end
+    return false
+end
 
 --TODO: getLastPathPoint doesn't exist
 local function isAdjacentTile(p1, p2)
@@ -228,47 +293,9 @@ local function trim(offsetGoal)
     end
 end
 
-local function isOffsetOk(p1, offset, showDebug)
-
-	if showDebug then
-		LOG("isOffsetOk(p1: " .. p1:GetString() .. ", offset: " .. offset:GetString())
-	end
-
-	--Init var
-	local isOk = true
-
-    --Okay for targeted?
-
-    if showDebug then
-    	LOG("targets:")
-	end
-    
-    for _, target in pairs(targets) do
-
-    	if showDebug then
-    		LOG("target at")
-    	end
-
-        isOk = isOk and isOffsetFromStartPosOk(p1, target:GetSpace(), offset)
-    end
-
-	if showDebug then
-    	LOG("-> isOk: " .. tostring(isOk))
-    end
-
-    --Also need to be ok for player
-    isOk = isOk and isOffsetFromStartPosOk(p1, p1, offset)
-
-    if showDebug then
-    	LOG(" -> player is ok: " .. tostring(isOk))
-	end
-
-    --Return
-    return isOk
-end
-
 --TODO: trim if we find an offset we already had
 local function tryAddOffset(p1, p3, max)
+
 	local offset = p3 - p1
 	local isOk = true
 
@@ -277,16 +304,8 @@ local function tryAddOffset(p1, p3, max)
 	if offset == Point(0, 0) then
 		--LOG(" -> here!")
 		isOk = false
-
-		--We even should clear right? Let's test that
-		pathOffsets = {}
-		return --Fuck it, let's just end the function here too
 	end
 
-	--Trying to encapsulate this in a separate function so I can use it elsewhere too:
-	isOk = isOk and isOffsetOk(p1, offset, false)
-
-	--[[
 	--Check if not already in the list! (new)
 	isOk = isOk and not isPointAlreadyInTheList(pathOffsets, offset)
 
@@ -294,10 +313,11 @@ local function tryAddOffset(p1, p3, max)
     for _, target in pairs(targets) do
         isOk = isOk and isOffsetFromStartPosOk(p1, target:GetSpace(), offset)
     end
-    ]]
 
     --Also need to be ok for player
     isOk = isOk and isOffsetFromStartPosOk(p1, p1, offset)
+
+    
 
     --Max distance?
     if #pathOffsets >= max then
@@ -308,10 +328,16 @@ local function tryAddOffset(p1, p3, max)
 	--If ok -> let's go
 	if isOk then
 		table.insert(pathOffsets, offset)
+
+		--Test
+		previousPoint = p3
+		previousOffset = offset
 	end
 
 	--Trim
 	trim(offset)
+
+	--debugPathOffsets()
 end
 
 
@@ -421,9 +447,6 @@ function truelch_ScorpionAttack:GetTargetArea(point)
 
 	ret:push_back(point) --test
 
-	--Test
-	pathOffsets = {} --hard reset
-
 	for dir = DIR_START, DIR_END do
 		for range = 1, self.Range do
 			local curr = point + DIR_VECTORS[dir] * range
@@ -450,6 +473,10 @@ function truelch_ScorpionAttack:GetSkillEffect(p1, p2)
     	ret:AddDamage(damage)
     end
 
+    --I can reset that here in preparation for phase 2 (test!)
+    previousPoint = p1
+    previousOffset = Point(0, 0)
+
     --Return
 	return ret
 end
@@ -457,39 +484,13 @@ end
 -- TWO CLICKS
 function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
 	local ret = PointList()
-
-	tmpList = {}
 	
-	--Old: add points surrounding last path offset?
-	--[[
-	if previousPoint ~= nil then --previousPoint doesn't exist anymore!
+	--Compute
+	tmpList = {}
+	if previousPoint ~= nil then
 		for dir = DIR_START, DIR_END do
 			local curr = previousPoint + DIR_VECTORS[dir]
-			if not isPointAlreadyInTheList(tmpList, curr) then
-				table.insert(tmpList, curr)
-			end
-		end
-	end
-	]]
-
-	local lastPoint = p1
-	if #pathOffsets > 0 then
-		--Note: this causes an error if pathOffsets is empty (but not nil)
-	    for j, offset in pairs(pathOffsets) do
-	        local curr = p1 + offset
-			if not isPointAlreadyInTheList(tmpList, curr) then --unnecessary verification but ok
-				table.insert(tmpList, curr)
-				lastPoint = curr --let's do this instead
-			end
-	    end
-	end
-
-	if #pathOffsets < self.MaxDistance then --strictly inferior
-		for dir = DIR_START, DIR_END do
-			local curr = lastPoint + DIR_VECTORS[dir]
-			local offsetFromStart = curr - p1
-			local isOffOk = isOffsetOk(p1, offsetFromStart, false)
-			if not isPointAlreadyInTheList(tmpList, curr) and isOffOk then
+			if not isPointAlreadyInTheList() then
 				table.insert(tmpList, curr)
 			end
 		end
@@ -500,6 +501,18 @@ function truelch_ScorpionAttack:GetSecondTargetArea(p1, p2)
 		ret:push_back(point)
 	end
 
+	--Test icons	
+	--for dir = DIR_START, DIR_END do
+		--local curr = p2 + DIR_VECTORS[dir]
+		--[[
+		local arrowDamage = SpaceDamage(curr)
+		arrowDamage.sImageMark = "combat/icons/movearrow_u.png"
+		ret:AddDamage(arrowDamage)
+		]]
+		--No damage in TargetArea, what is wrong with me?
+
+	--end
+	
 	--Return
 	return ret
 end
@@ -516,8 +529,6 @@ Fix attemps:
 4: charge
 ]]
 function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
-	--LOG("GetFinalEffect")
-
 	local ret = SkillEffect()
 	local direction = GetDirection(p3 - p2)
 
@@ -538,7 +549,13 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	        local curr = target:GetSpace() + offset
 	        move:push_back(curr)
 	    end
+	    --ret:AddMove(move, FULL_DELAY)
+	    --ret:AddMove(move, NO_DELAY)
 	    ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+	    --ret:AddMove() --Attempt fix 3 (Pilot_Arrogant): use flying path
+	    --ret:AddCharge(move, NO_DELAY) --Attempt fix 4
+	   	--ret:AddTeleport(move, NO_DELAY) --(incorrect)
+	    --ret:AddTeleport(target:GetSpace(), target:GetSpace() + pathOffsets[#pathOffsets], NO_DELAY) --Attempt fix 5
     end
 
     --Apply move to self
@@ -548,48 +565,57 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
         local curr = p1 + offset
         move:push_back(curr)
     end
+    --ret:AddMove(move, FULL_DELAY)
+    --ret:AddMove(move, NO_DELAY)
     ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+    --ret:AddMove() --Attempt fix 3 (Pilot_Arrogant): use flying path
+    --ret:AddCharge(move, NO_DELAY) --Attempt fix 4
+    --ret:AddTeleport(move, NO_DELAY) --(incorrect)
+    --ret:AddTeleport(p1, p3, NO_DELAY) --Attempt fix 5
 
-    --Path icons
+    --Attempt fix 1: teleport all pawns to their last position
+    --ret:AddDelay(0.1)
+
+    --Enemies
     --[[
-    for j, offset in pairs(pathOffsets) do
-        local curr = p1 + offset
-		local pathDamage = SpaceDamage(curr)		
-		pathDamage.sImageMark = "combat/icons/truelch_"..tostring(j)..".png"
-		ret:AddDamage(pathDamage)
+    for i, target in pairs(targets) do
+    	LOG("target pos: " .. target:GetSpace():GetString())
+    	ret:AddScript(string.format("Board:GetPawn(%s):SetSpace(%s)", target:GetSpace():GetString(), pathOffsets[#pathOffsets]:GetString()))
     end
     ]]
 
-	--LOG("#pathOffsets: " .. tostring(#pathOffsets) .. " / self.MaxDistance: " .. tostring(self.MaxDistance))	
+    --Test icons --->
+    LOG("Loop:")
+    for j, offset in pairs(pathOffsets) do
+    	LOG(" ---> j: " .. tostring(j))
+        local curr = p1 + offset
+		local pathDamage = SpaceDamage(curr)		
+		--pathDamage.sImageMark = "combat/icons/truelch_0.png"
+		pathDamage.sImageMark = "combat/icons/truelch_"..tostring(j)..".png"
+		ret:AddDamage(pathDamage)
+    end
 
-	--[[
-	--Arrow icons
+
+    --[[
+	LOG("#pathOffsets: " .. tostring(#pathOffsets) .. " / self.MaxDistance: " .. tostring(self.MaxDistance))
+	local baseStr = "combat/icons/truelch_arrow"
+	if #pathOffsets >= self.MaxDistance then
+		baseStr = baseStr .. "off"
+	end
 	for dir = DIR_START, DIR_END do
-		local baseStr = "combat/icons/truelch_arrow" --Important: reset it each loop iteration instead of before the loop
-		--Because I don't want to search for half and hour just to find that I was looking for "combat/icons/truelch_arrowoffoffoffoff3.png"
-		--LOL
-
+		--0: UP
+		--1: RIGHT ()
+		--2: DOWN (bot left)
+		--3: LEFT (top left)
 		local curr = p3 + DIR_VECTORS[dir]
-		local isIn = false
-		for _, offset in pairs(pathOffsets) do
-			local pathPoint = p1 + offset
-			if pathPoint == curr then			
-				isIn = true
-			end
-	    end
-
-	    local offsetFromStart = curr - p1
-	    local isOffOk = isOffsetOk(p1, offsetFromStart, false)
-
-		if (#pathOffsets >= self.MaxDistance and not isIn) or not isOffOk then
-			baseStr = baseStr.."off" --except if we can actually go back
-		end
-		
 		local arrowDamage = SpaceDamage(curr)
 		arrowDamage.sImageMark = baseStr..dir..".png"
 		ret:AddDamage(arrowDamage)
 	end
 	]]
+	-- <--- Test icons
+
+    --Player also? I don't think so
 
     --Ret
 	return ret
@@ -657,6 +683,7 @@ function truelch_ScorpionAttack_Tip:GetSkillEffect(p1, p2)
 
 	--CUSTOM TIP IMAGE: TARGETS
 	local customTargets = {}
+	--table.insert(customTargets, Board:GetPawn(Point(2, 2))) --position of the tip image enemy (TODO: change that for the upgraded version)
 	for i, tgtPos in pairs(self.TipImgTgtPos) do
 		table.insert(customTargets, Board:GetPawn(tgtPos))
 	end

@@ -516,8 +516,6 @@ Fix attemps:
 4: charge
 ]]
 function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
-	--LOG("GetFinalEffect")
-
 	local ret = SkillEffect()
 	local direction = GetDirection(p3 - p2)
 
@@ -538,7 +536,14 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
 	        local curr = target:GetSpace() + offset
 	        move:push_back(curr)
 	    end
-	    ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+
+	    --ret:AddLeap(move, NO_DELAY) --Tried with commenting and uncommenting it, it bugs in any case(I)
+
+	    local fx = SkillEffect()
+		fx:AddLeap(move, NO_DELAY)
+		local sd = fx.effect:back() --So this must be the issue
+		sd.bHidePath = true
+		ret.effect:push_back(sd)
     end
 
     --Apply move to self
@@ -548,7 +553,17 @@ function truelch_ScorpionAttack:GetFinalEffect(p1, p2, p3)
         local curr = p1 + offset
         move:push_back(curr)
     end
+
+	--Suggestion from
     ret:AddLeap(move, NO_DELAY) --Attempt fix 2 (Pilot_Arrogant)
+
+    --[[
+    local fx = SkillEffect()
+	fx:AddLeap(move, NO_DELAY)
+	local sd = fx.effect:back()
+	sd.bHidePath = true
+	ret.effect:push_back(sd)
+	]]
 
     --Path icons
     --[[

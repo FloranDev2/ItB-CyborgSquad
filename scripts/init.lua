@@ -2,7 +2,7 @@ local mod = {
 	id = "truelch_Cyborg_Squad",
 	name = "Truelch's Cyborgs",
 	icon = "img/icon.png",
-	version = "1.0.2",
+	version = "1.0.3",
 	modApiVersion = "2.8.3",
 	gameVersion = "1.2.88",
     dependencies = {
@@ -25,8 +25,8 @@ function mod:init()
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")
 	require(self.scriptPath.."/weapons/bouncer_attack")
-	--require(self.scriptPath.."/weapons/bouncer_attack_BU") --this one is functional but has wacky delays
 	require(self.scriptPath.."/weapons/burrower_attack")
+	--require(self.scriptPath.."/weapons/testWeapon")
 
 	--Pawns
 	require(self.scriptPath .."pawns")

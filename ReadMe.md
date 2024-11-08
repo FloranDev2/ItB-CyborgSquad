@@ -1,4 +1,4 @@
-# Truelch's Cyborg Squad (v1.0.2)
+# Truelch's Cyborg Squad (v1.0.3)
 
 I'm finally releasing this squad, that was supposed to bring me back to modding some months (years?) ago.
 All feedback is welcome, especially to squish these pesky Vek, I mean bugs!
@@ -27,6 +27,14 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 - Improve readibility of Scorpion's attack by displaying the current path (QoL improvement)
 
 ## Versions
+
+### v1.0.3
+- Fixed issues with Bouncer's weapon:
+  - when only one of the unit is shielded, it now removes correctly the shield and kills the other unit
+  - when one of the unit can leave a corpse after dying (like Mechs but also certain enemies like the tree boss I think), the other is killed no matter what
+- Just a reminder for these cases (they were already treated but it's a good reminder):
+  - if both units leave corpses, the attack just become a push
+  - if both units are shielded / frozen, both lose it, and then we proceed with regular damage calculation
 
 ### v1.0.2
 - Fixed Scorpion's weapon logic for the path creation

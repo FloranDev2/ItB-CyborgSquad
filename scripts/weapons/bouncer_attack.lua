@@ -225,7 +225,7 @@ Need to take account of:
   -> Disable throwing a Mech or any pawn that leaves a corpse I guess
 - ACID????
 ]]
-function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
+function truelch_BouncerAttack:ComputeDamage(ret, customP2, customP3)
 	--LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
@@ -246,67 +246,70 @@ function truelch_BouncerAttack:ComputeDamage(customP2, customP3)
 		end
 	end
 
-	if pawn2 ~= nil and pawn3 ~= nil then
+	--LOG("(Effective health) -> dmg2: " .. tostring(dmg2) .. ", dmg3: " .. tostring(dmg3))
 
+	if pawn2 ~= nil and pawn3 ~= nil then
+		--LOG("pawn2:IsCorpse(): " .. tostring(pawn2:IsCorpse()))
+		--LOG("pawn3:IsCorpse(): " .. tostring(pawn3:IsCorpse()))
 		--Other verification here (with return)
 		if pawn2:IsCorpse() and pawn3:IsCorpse() then --Maybe unnecessary
+			--LOG(" => Both are corpse so we won't throw and do the push behaviour instead -> nil")
 			return nil
 		end
 
 		--We only check for p2 ofc
 		--Wait, it's not supposed to make attack against stable pawns impossible! 
 		if pawn2:IsGuarding() then
+			--LOG(" => pawn2 is guarding -> nil")
 			return nil
 		end
 
 		selfDmgCond = true --THIS! DON'T FORGET ABOUT THIS!
 
 		if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
-			--LOG("Here!! (squad has network shield and at least one of the pawns is a mech)")
+			--LOG(" => Here!! (squad has network shield and at least one of the pawns is a mech)")
 			if pawn2:IsMech() and pawn3:IsMech() then --really... I guess we should still do this...
-				--LOG("Both pawns are mechs!")
+				--LOG(" => Both pawns are mechs!")
 				return nil
 			elseif pawn2:IsMech() then
-				--LOG("pawn2 is the only mech")
-				--return dmg3
-				return dmg2 --test
+				--LOG(" => pawn2 is the only mech")
+				return dmg2
 			elseif pawn3:IsMech() then
-				--LOG("pawn3 is the only mech")
-				--return dmg2
-				return dmg3 --test
+				--LOG(" => pawn3 is the only mech")
+				return dmg3
 			else
-				--LOG("Uhh wtf??") --Should NOT happen. Right?
+				--LOG(" => Uhh wtf??") --Should NOT happen. Right?
 			end
+		elseif (pawn2:IsCorpse() and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
+			--LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
+			return dmg2
+		elseif (pawn3:IsCorpse() and dmg2 < dmg3) then
+			--LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
+			return dmg3
 		elseif (pawn2:IsShield() or pawn2:IsFrozen()) and (pawn3:IsShield() or pawn3:IsFrozen()) then
 			--That can happen even with the compute before, because it happens simultaneously
-			--LOG("Both are frozen or shielded, but it's being removed, so we just do the normal computation")
+			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
+			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
+			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
+			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
 			return math.min(dmg2, dmg3)
 		elseif pawn2:IsShield() or pawn2:IsFrozen() then
+			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
+			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
+			--LOG(" => pawn2 is shield / frozen -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif pawn3:IsShield() or pawn3:IsFrozen() then
+			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
+			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
+			--LOG(" => pawn3 is shield / frozen -> dmg2: " .. tostring(dmg2))
 			return dmg2
 		else
-			--LOG(" ---> Should reach here!!! dmg: " .. tostring(math.min(dmg2, dmg3)))
+			--LOG(" => Regular -> math.min(dmg2, dmg3): " .. tostring(math.min(dmg2, dmg3)))
 			return math.min(dmg2, dmg3)
 		end
 	else
+		--LOG(" => nil")
 		return nil
-	end
-end
-
-function truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2, customP3)	
-	local pawn2 = Board:GetPawn(customP2)
-	local pawn3 = Board:GetPawn(customP3)
-
-	if pawn2 == nil or pawn3 == nil then
-		return
-	end
-
-	if (pawn2:IsFrozen() or pawn2:IsShield()) and (pawn3:IsFrozen() or pawn3:IsShield()) then
-		ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
-		ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
-		ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
-		ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
 	end
 end
 
@@ -331,23 +334,26 @@ function truelch_BouncerAttack:GetFinalEffect(p1, p2, p3)
 	local customP3C = p3 + offset2 --C
 
 	--New (test): if both have shield / ice, remove both
+	-- --> that logic was moved directly in ComputeDamage
+	--[[
 	truelch_BouncerAttack:ComputeShieldAndIce(ret, p2, p3) --A
 	if self.Sweep then
 		truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2B, customP3B) --B
 		truelch_BouncerAttack:ComputeShieldAndIce(ret, customP2C, customP3C) --C
 	end
+	]]
 
 	--Damages for throw. If nil, the throw is not possible.
-	local dmgA = self:ComputeDamage(p2, p3)
+	local dmgA = self:ComputeDamage(ret, p2, p3)
 
 	local dmgB = nil
 	if self.Sweep then
-		dmgB = self:ComputeDamage(customP2B, customP3B)
+		dmgB = self:ComputeDamage(ret, customP2B, customP3B)
 	end
 
 	local dmgC = nil
 	if self.Sweep then
-		dmgC = self:ComputeDamage(customP2C, customP3C)
+		dmgC = self:ComputeDamage(ret, customP2C, customP3C)
 	end
 
 	--LOG("dmgA: " .. tostring(dmgA))

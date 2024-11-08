@@ -211,6 +211,22 @@ function truelch_BouncerAttack:GetSecondTargetArea(p1, p2)
 	return ret
 end
 
+local kindaCorpses =
+{
+	"lmn_SequoiaBoss",
+	"lmn_SequoiaBoss2"
+}
+
+function truelch_BouncerAttack:IsKindaCorpse(pawn)
+	local pawnType = pawn:GetType()
+	for _, elem in pairs(kindaCorpses) do
+		if pawnType == elem then
+			return true
+		end
+	end
+	return false
+end
+
 --[[
 Need to take account of:
 - Ice (Done, need to test)
@@ -280,10 +296,10 @@ function truelch_BouncerAttack:ComputeDamage(ret, customP2, customP3)
 			else
 				--LOG(" => Uhh wtf??") --Should NOT happen. Right?
 			end
-		elseif (pawn2:IsCorpse() and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
+		elseif ((pawn2:IsCorpse() or self:IsKindaCorpse(pawn2)) and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
 			--LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
 			return dmg2
-		elseif (pawn3:IsCorpse() and dmg2 < dmg3) then
+		elseif ((pawn3:IsCorpse() or self:IsKindaCorpse(pawn3)) and dmg2 < dmg3) then
 			--LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif (pawn2:IsShield() or pawn2:IsFrozen()) and (pawn3:IsShield() or pawn3:IsFrozen()) then

@@ -20,13 +20,12 @@ function mod:init()
 	require(self.scriptPath.."assets")
 
 	--Misc
-	--require(self.scriptPath .."achievements")
+	--require(self.scriptPath .."achievements") --soon
 
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")
 	require(self.scriptPath.."/weapons/bouncer_attack")
 	require(self.scriptPath.."/weapons/burrower_attack")
-	--require(self.scriptPath.."/weapons/testWeapon")
 
 	--Pawns
 	require(self.scriptPath .."pawns")

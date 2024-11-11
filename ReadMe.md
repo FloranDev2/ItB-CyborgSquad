@@ -1,4 +1,4 @@
-# Truelch's Cyborg Squad (v1.0.3)
+# Truelch's Cyborg Squad (v1.1.0)
 
 I'm finally releasing this squad, that was supposed to bring me back to modding some months (years?) ago.
 All feedback is welcome, especially to squish these pesky Vek, I mean bugs!
@@ -27,6 +27,12 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 - Improve readibility of Scorpion's attack by displaying the current path (QoL improvement)
 
 ## Versions
+
+### v1.1.0
+Added achievements:
+- Highlander: ???
+- Vek Ball / King's Bouncer: throw X times enemies at boss / kill a boss by throwing things at it.
+- Scorpsome: kill 4 enemies in one single Scorpion's attack
 
 ### v1.0.3
 - Fixed issues with Bouncer's weapon:

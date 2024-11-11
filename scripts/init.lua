@@ -2,7 +2,7 @@ local mod = {
 	id = "truelch_Cyborg_Squad",
 	name = "Truelch's Cyborgs",
 	icon = "img/icon.png",
-	version = "1.0.3",
+	version = "1.1.0",
 	modApiVersion = "2.8.3",
 	gameVersion = "1.2.88",
     dependencies = {
@@ -20,7 +20,7 @@ function mod:init()
 	require(self.scriptPath.."assets")
 
 	--Misc
-	--require(self.scriptPath .."achievements") --soon
+	require(self.scriptPath .."achievements") --soon
 
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")

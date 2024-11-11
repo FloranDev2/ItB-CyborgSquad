@@ -3,39 +3,56 @@ local squad = "truelch_Cyborg_Squad"
 
 --[[
 Ideas:
-- VekBall: launch Vek 4 time on a Leader in a single mission.
+- Highlander / There can be only one:
+	- Bouncer (AE)
+	- Burrower (elite)
+	- Scorpion (standard)
+
+- King's Bouncer:
+- VekBall: launch Vek 4 times on a Leader in a single mission.
+- 
 - Skarner / Family Gathering: 
 ]]
 
--- Add Achievements
+-- --- CONSTANT VARIABLES --- --
+local SCORPSOME_KILL_GOAL = 4
+local VEK_BALL_GOAL = 4
+
+-- -- ADD ACHIEVEMENTS --- --
 local achievements = {
-	tatu_Avatar = modApi.achievements:add{
-		id = "tatu_Avatar",
-		name = "Avatar",
-		tooltip = "Use the Razor Radula to pull enemies to water, fire, smoke and A.C.I.D. tiles in a single game.",
-		image = mod.resourcePath.."img/achievements/tatu_Avatar.png",
-		objective = {true,true,true,true},
+	truelch_Highlander = modApi.achievements:add{
+		id = "truelch_Highlander",
+		name = "Highlander",
+		tooltip = "The Bouncer must kill at least 1 Bouncer, the the Scorpion 1 Scorpion and the Burrower 1 Burrower",
+		image = mod.resourcePath.."img/achievements/truelch_Highlander.png",
 		squad = squad,
 	},
-	tatu_Spores = modApi.achievements:add{
-		id = "tatu_Spores",
-		name = "Overgrowth",
-		tooltip = "Have 4 Techno-Spores on the board at the same time.",
-		image = mod.resourcePath.."img/achievements/tatu_Spores.png",
-		objective = 1,
+	--truelch_KingBouncer = modApi.achievements:add{
+	truelch_VekBall = modApi.achievements:add{
+		--id = "truelch_KingBouncer",
+		--name = "King's Bouncer",
+		--tooltip = "Kill a boss by throwing something at it",
+		id = "truelch_VekBall",
+		name = "Vek Ball",
+		tooltip = "Throw "..tostring(VEK_BALL_GOAL).." times a Vek at a Leader in a mission",
+		image = mod.resourcePath.."img/achievements/truelch_VekBall.png",
 		squad = squad,
 	},
-	tatu_Kraken = modApi.achievements:add{
-		id = "tatu_Kraken",
-		name = "Kraken",
-		tooltip = "Hit 4 enemies in a single attack of the Titanic Tentacles.",
-		image = mod.resourcePath.."img/achievements/tatu_Kraken.png",
-		objective = 1,
+	truelch_Scorpsome = modApi.achievements:add{
+		id = "truelch_Scorpsome",
+		name = "Scorpsome",
+		tooltip = "Kill "..tostring(SCORPSOME_KILL_GOAL).." enemies in one Scorpion's attack",
+		image = mod.resourcePath.."img/achievements/truelch_Scorpsome.png",
 		squad = squad,
 	}
 }
 
--- Helper Functions
+-- --- SOME VARS ---
+--No need to store that in mission/game/achievent data since it's resolved "instantly"
+local scorpsomeKillCount = 0
+--local vekBallCount = 0
+
+-- --- HELPER FUNCTIONS ---
 local function isGame()
 	return true
 		and Game ~= nil
@@ -58,191 +75,408 @@ local function isMissionBoard()
 		and Board:IsTipImage() == false
 end
 
-local function tatu_hash(point) return point.x + point.y*10 end
+local function isSquad()
+	return true
+		and isGame()
+		and GAME.additionalSquadData.squad == squad
+end
 
--- Hooked
--- local function tatu_skillStart(mission,pawn,weaponId,p1,p2)
-	-- if isMissionBoard() then
-		-- if not achievements.tatu_Hooked:isComplete() and weaponId:find("^tatu_GastropodAttack") ~= nil then
-			-- local target = GetProjectileEnd(p1,p2,PATH_PROJECTILE)
-			-- local dist = p1:Manhattan(target)
-			-- local dist2 = p1:Manhattan(p2)
-			-- if dist >= 7 and (dist2 == 1 or weaponId:find("^tatu_GastropodAttack_A") == nil) then
-				-- modApi:scheduleHook(1200, function()
-					-- achievements.tatu_Hooked:addProgress(1)
-				-- end)
-			-- end
-		-- end
-	-- end
--- end
--- Board:SetFire(Point(7,3),true)
-
--- Avatar
-local function tatu_skillStart(mission,pawn,weaponId,p1,p2)
-	if isMissionBoard() then
-		if not achievements.tatu_Avatar:isComplete() and weaponId:find("^tatu_GastropodAttack") ~= nil then
-			local direction = GetDirection(p2 - p1)
-			local target = GetProjectileEnd(p1,p2,PATH_PROJECTILE)
-			
-			local endTarget = p1 + DIR_VECTORS[direction]
-			if weaponId:find("^tatu_GastropodAttack_A") ~= nil then
-				if p2 ~= target then
-					endTarget = p2
-				elseif p2 ~= p1 + DIR_VECTORS[direction] then
-					endTarget = p2 - DIR_VECTORS[direction]
-				end
-			end
-			
-			local dist = target:Manhattan(endTarget)
-			local dist2 = target:Manhattan(p1)
-			local tpawn = Board:GetPawn(target)
-			
-			if target ~= endTarget and tpawn and tpawn:GetTeam() == TEAM_ENEMY and not tpawn:IsGuarding() then
-				local delayAch = 200*dist + 100*dist2
-				local achProg = {}
-				achProg[1] = Board:GetTerrain(endTarget) == TERRAIN_WATER or nil
-				achProg[2] = (Board:IsFire(endTarget) or Board:IsTerrain(endTarget,TERRAIN_LAVA)) or nil
-				achProg[3] = Board:IsSmoke(endTarget) or nil
-				achProg[4] = Board:IsAcid(endTarget) or nil
-				modApi:scheduleHook(delayAch, function()
-					achievements.tatu_Avatar:addProgress(achProg)
-				end)
-			end
+-- --- COMPLETE ACHIEVEMENT --- --
+function completeHighlander(isDebug)
+	if isDebug then
+		LOG("completeHighlander()")
+		Board:AddAlert(Point(4, 4), "Highlander completed!")
+	else
+		if not achievements.truelch_Highlander:isComplete() then
+			achievements.truelch_Highlander:addProgress{ complete = true }
 		end
 	end
 end
 
-local function tatu_resetTurn(mission)
-	if not achievements.tatu_Avatar:isComplete() then
-		if mission.tatu_AvatarTable then
-			achievements.tatu_Avatar:addProgress(mission.tatu_AvatarTable)
+function completeVekBall(isDebug)
+	if isDebug then
+		LOG("completeVekBall()")
+		Board:AddAlert(Point(4, 4), "Vek Ball completed!")
+	else
+		if not achievements.truelch_VekBall:isComplete() then
+			achievements.truelch_VekBall:addProgress{ complete = true }
 		end
 	end
 end
 
-local function tatu_nextTurn(mission)
-	mission.tatu_AvatarTable = achievements.tatu_Avatar:getProgress()
-end
-
-local function tatu_GameStart()
-	if not achievements.tatu_Avatar:isComplete() then
-		achievements.tatu_Avatar:addProgress({false,false,false,false})
-	end
-end
-
--- Spores
-local function tatu_pawnTracked(mission,pawn)
-	if isMissionBoard() and not achievements.tatu_Spores:isComplete() then
-		local pawnList = extract_table(Board:GetPawns(TEAM_PLAYER))
-		local count = 0
-		for i = 1, #pawnList do
-			local currPawn = Board:GetPawn(pawnList[i])
-			if currPawn:GetType():find("^tatu_Spore") ~= nil then
-				count = count + 1
-			end
-		end
-		if count >= 4 then
-			achievements.tatu_Spores:addProgress(1)
-			achievements.tatu_Spores.tooltip = "Have 4 Techno-Spores on the board at the same time.\n\nTechno-Spores: "..tostring(count) 
+--Apparently, passing a nil value is basically the same as false here (which is convenient)
+function completeScorpsome(isDebug)
+	if isDebug then
+		LOG("completeScorpsome()")
+		Board:AddAlert(Point(4, 4), "Scorpsome completed!")
+	else
+		if not achievements.truelch_Scorpsome:isComplete() then
+			achievements.truelch_Scorpsome:addProgress{ complete = true }
 		end
 	end
 end
 
-local tatu_onWindowShown = function(text_id) -- clean crew texts
-	if text_id == "Escape_Title" then
-		-- Spores
-		if isMissionBoard() and not achievements.tatu_Spores:isComplete() then
-			local pawnList = extract_table(Board:GetPawns(TEAM_PLAYER))
-			local count = 0
-			for i = 1, #pawnList do
-				local currPawn = Board:GetPawn(pawnList[i])
-				if currPawn:GetType():find("^tatu_Spore") ~= nil then
-					count = count + 1
-				end
-			end
-			achievements.tatu_Spores.tooltip = "Have 4 Techno-Spores on the board at the same time.\n\nTechno-Spores: "..tostring(count) 
-		else
-			achievements.tatu_Spores.tooltip = "Have 4 Techno-Spores on the board at the same time."
+
+-- --- DATA ---
+local function gameData()
+	if GAME.truelch_Cyborg_Squad == nil then
+		GAME.truelch_Cyborg_Squad = {}
+	end
+
+	if GAME.truelch_Cyborg_Squad.achievementData == nil then
+		GAME.truelch_Cyborg_Squad.achievementData = {}
+	end
+
+	return GAME.truelch_Cyborg_Squad.achievementData
+end
+
+local function achievementData()
+	--using mission will cause an error on island menu while looking in achievements tooltips
+	--local mission = GetCurrentMission()
+	local game = gameData()
+
+	if game.truelch_Cyborg_Squad == nil then
+		game.truelch_Cyborg_Squad = {}
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData == nil then
+		game.truelch_Cyborg_Squad.achievementData = {}
+	end
+
+	--Initializing other data here
+	if game.truelch_Cyborg_Squad.achievementData.lastAttPawnType == nil then
+		game.truelch_Cyborg_Squad.achievementData.lastAttPawnType = "" --nil is not a good idea kappa
+	end
+
+	--Should be mission data
+	if game.truelch_Cyborg_Squad.achievementData.vekBallCount == nil then
+		game.truelch_Cyborg_Squad.achievementData.vekBallCount = 0
+	end
+
+	--[[
+	if game.truelch_Cyborg_Squad.achievementData.bouncerKilled == nil then
+		game.truelch_Cyborg_Squad.achievementData.bouncerKilled = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.burrowerKilled == nil then
+		game.truelch_Cyborg_Squad.achievementData.burrowerKilled = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.scorpionKilled == nil then
+		game.truelch_Cyborg_Squad.achievementData.scorpionKilled = 0
+	end
+	]]
+
+	--Killed by Bouncer
+	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBouncer == nil then
+		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBouncer = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBouncer == nil then
+		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBouncer = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBouncer == nil then
+		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBouncer = 0
+	end
+
+	--Killed by Burrower
+	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBurrower == nil then
+		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBurrower = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBurrower == nil then
+		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBurrower = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBurrower == nil then
+		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBurrower = 0
+	end
+
+	--Killed by Scorpion
+	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByScorpion == nil then
+		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByScorpion = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByScorpion == nil then
+		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByScorpion = 0
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByScorpion == nil then
+		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByScorpion = 0
+	end
+
+	--Return
+	return game.truelch_Cyborg_Squad.achievementData
+end
+
+--- MISC FUNCTIONS ---
+--Lazy way
+local bouncers =
+{
+	"Bouncer1",
+	"Bouncer2",
+	"BouncerBoss"
+}
+
+function isBouncer(pawn)
+	local pawnType = pawn:GetType()
+	for _, elem in pairs(bouncers) do
+		if pawnType == elem then
+			return true
+		end
+	end
+	return false
+end
+
+local burrowers =
+{
+	"Burrower1",
+	"Burrower2",
+	--"BurowerBoss" --doesn't exist, but maybe it's been done in a mod...
+}
+
+function isBurrower(pawn)
+	local pawnType = pawn:GetType()
+	for _, elem in pairs(burrowers) do
+		if pawnType == elem then
+			return true
+		end
+	end
+	return false
+end
+
+local scorpions =
+{
+	"Scorpion1",
+	"Scorpion2",
+	"ScorpionBoss",
+	"Scorpion_Acid" --!
+}
+
+function isScorpion(pawn)
+	local pawnType = pawn:GetType()
+	for _, elem in pairs(scorpions) do
+		if pawnType == elem then
+			return true
+		end
+	end
+	return false
+end
+
+--idk if I can access this: Tier = TIER_BOSS
+function isBoss(pawn)
+	--[[
+	local find = string.find(pawn:GetType(), "Boss")
+	local cond = find ~= nil
+	LOG("isBoss("..pawn:GetType()..") -> find: "..tostring(find, "Boss").." -> cond: " .. tostring(cond))
+	return cond
+	]]
+	return string.find(pawn:GetType(), "Boss") ~= nil
+end
+
+function isBouncerAttack(weaponId)
+	--LOG("isBouncerAttack(weaponId: "..weaponId..")")
+	return string.find(weaponId, "truelch_BouncerAttack") ~= nil
+end
+
+--- TOOLTIP ---
+local getTooltip = achievements.truelch_Highlander.getTooltip
+achievements.truelch_Highlander.getTooltip = function(self)
+	local result = getTooltip(self)
+
+	local status = ""
+
+	--No need to check if we're in a mission
+	if isGame() then
+		--status = "\n\nBouncer(s) killed: " .. tostring(achievementData().bouncerKilled)
+		--status += "\nBurrower(s) killed: " .. tostring(achievementData().burrowerKilled)
+		--status += "\nScorpion(s) killed: " .. tostring(achievementData().scorpionKilled)
+		status = "\nKills (Bouncers / Burrowers / Scorpions):"
+		status = status.."\nBouncer: " ..tostring(achievementData().bouncerKilledByBouncer.. " / "..tostring(achievementData().burrowerKilledByBouncer.. " / "..tostring(achievementData().scorpionKilledByBouncer)))
+		status = status.."\nBurrower: "..tostring(achievementData().bouncerKilledByBurrower.." / "..tostring(achievementData().burrowerKilledByBurrower.." / "..tostring(achievementData().scorpionKilledByBurrower)))
+		status = status.."\nScorpion: "..tostring(achievementData().bouncerKilledByScorpion.." / "..tostring(achievementData().burrowerKilledByScorpion.." / "..tostring(achievementData().scorpionKilledByScorpion)))
+	end
+
+	result = result .. status
+
+	return result
+end
+
+local getTooltip = achievements.truelch_VekBall.getTooltip
+achievements.truelch_VekBall.getTooltip = function(self)
+	local result = getTooltip(self)
+
+	local status = ""
+
+	--No need to check if we're in a mission
+	if isGame() and isMission() then
+		status = "\nObjects thrown at boss: "..tostring(achievementData().vekBallCount.." / "..tostring(VEK_BALL_GOAL))
+	end
+
+	result = result .. status
+
+	return result
+end
+
+--- HOOKS ---
+local HOOK_onNextTurn = function(mission)
+	achievementData().lastAttPawnType = ""
+end
+
+local HOOK_onSkillStarted = function(mission, pawn, weaponId, p1, p2)
+		local exit = false
+			or isSquad() == false
+			or isMission() == false
+
+		if exit then
+			return
+		end
+
+		if type(weaponId) == 'table' then
+    		weaponId = weaponId.__Id
+		end
+
+		if weaponId ~= "Move" and weaponId ~= nil then
+			achievementData().lastAttPawnType = pawn:GetType()
+		end
+end
+
+local HOOK_onFinalEffectStarted = function(mission, pawn, weaponId, p1, p2, p3)
+	--LOG(string.format("%s is using %s at %s and %s!", pawn:GetMechName(), weaponId, p2:GetString(), p3:GetString()))
+
+	--Also needed!
+	achievementData().lastAttPawnType = pawn:GetType()
+
+	--For King's Bouncer: throw stuff at boss
+	local pawn3 = Board:GetPawn(p3)
+	if pawn3 ~= nil and isBoss(pawn3) and isBouncerAttack(weaponId) then
+		--LOG("Here! (we threw stuff at a boss)")
+
+		--Vek Ball
+		achievementData().vekBallCount = achievementData().vekBallCount + 1
+
+		--Check goal
+		if achievementData().vekBallCount >= VEK_BALL_GOAL then
+			completeVekBall()
 		end
 	end
 end
 
--- Kraken
-local function tatu_finalEffectStart(mission,pawn,weaponId,p1,p2,p3)
-	if isMissionBoard() then
-		if not achievements.tatu_Kraken:isComplete() and weaponId:find("^tatu_StarfishAttack") ~= nil then
-			local dist = p1:Manhattan(p2)
-			local dist2 = p1:Manhattan(p3)
-			local pList = {}
-			
-			-- 1st target
-			if dist < 2 then
-				dir = GetDirection(p2 - p1)
-				pA = p2 + DIR_VECTORS[(dir+1)%4]
-				pB = p2 + DIR_VECTORS[(dir-1)%4]
-				if Board:IsValid(pA) then pList[tatu_hash(pA)] = pA end
-				if Board:IsValid(pB) then pList[tatu_hash(pB)] = pB end
-			else
-				pList[tatu_hash(p2)] = p2
-			end
-			
-			-- 2nd target
-			if p3 ~= p1 then
-				if dist2 < 2 then
-					dir = GetDirection(p3 - p1)
-					pA = p3 + DIR_VECTORS[(dir+1)%4]
-					pB = p3 + DIR_VECTORS[(dir-1)%4]
-					if Board:IsValid(pA) then pList[tatu_hash(pA)] = pA end
-					if Board:IsValid(pB) then pList[tatu_hash(pB)] = pB end
-				else
-					pList[tatu_hash(p3)] = p3
-				end
-			end
-			
-			-- add achievement
-			local count = 0
-			for i,p in pairs(pList) do
-				if Board:GetPawn(p) and Board:GetPawn(p):GetTeam() == TEAM_ENEMY then
-					count = count + 1
-				end
-			end
-			if count >= 4 then achievements.tatu_Kraken:addProgress(1) end
+
+
+local HOOK_onPawnKilled = function(mission, pawn)
+	if not isSquad() or not isMission() then return end
+
+	--LOG("HOOK_onPawnKilled - achievementData().lastAttPawnType: "..achievementData().lastAttPawnType)
+
+	--Scorpsome achievement
+	if achievementData().lastAttPawnType == "truelch_ScorpionMech" then
+		--Increment kill count (no need to store the value in mission data or game data or achievement data since it's resolved instantly)
+		scorpsomeKillCount = scorpsomeKillCount + 1
+
+		--LOG("scorpsomeKillCount: "..tostring(scorpsomeKillCount))
+
+		--Reached goal?
+		if scorpsomeKillCount >= SCORPSOME_KILL_GOAL then
+			completeScorpsome()
+		end
+	else
+		--Reset kill count
+		scorpsomeKillCount = 0
+	end
+
+	--Highlander achievement	
+	if isBouncer(pawn) then
+		--Increment kill count
+
+		--achievementData.bouncerKilled = achievementData.bouncerKilled + 1
+
+		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
+			achievementData().bouncerKilledByBouncer = achievementData().bouncerKilledByBouncer + 1
+		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
+			achievementData().bouncerKilledByBurrower = achievementData().bouncerKilledByBurrower + 1
+		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
+			achievementData().bouncerKilledByScorpion = achievementData().bouncerKilledByScorpion + 1
+		end
+
+		--TODO: check that at the end of the run
+		--idk what i'm gonna do with it for now
+		--Check kill count
+		--[[
+		if achievementData.bouncerKilled >= VALKYRIES_GOAL then
+			completeRideOfTheValkyries()
+		end
+		]]
+	elseif isBurrower(pawn) then
+		--[[
+		achievementData.burrowerKilled = achievementData.burrowerKilled + 1
+		LOG("burrower(s) killed: " .. achievementData.burrowerKilled)
+		]]
+		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
+			achievementData().burrowerKilledByBouncer = achievementData().burrowerKilledByBouncer + 1
+		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
+			achievementData().burrowerKilledByBurrower = achievementData().burrowerKilledByBurrower + 1
+		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
+			achievementData().burrowerKilledByScorpion = achievementData().burrowerKilledByScorpion + 1
+		end
+	elseif isScorpion(pawn) then
+		--[[
+		achievementData.scorpionKilled = achievementData.scorpionKilled + 1
+		LOG("scorpion(s) killed: " .. achievementData.scorpionKilled)
+		]]
+		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
+			achievementData().scorpionKilledByBouncer = achievementData().scorpionKilledByBouncer + 1
+		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
+			achievementData().scorpionKilledByBurrower = achievementData().scorpionKilledByBurrower + 1
+		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
+			achievementData().scorpionKilledByScorpion = achievementData().scorpionKilledByScorpion + 1
 		end
 	end
 end
 
+
+local HOOK_onMissionStarted = function(mission)
+	LOG("On Mission Started -> reset vek ball count")
+	if isMission() then --haven't checked if test mission would trigger that
+		--Reset vek ball
+		achievementData().vekBallCount = 0
+	end
+end
+
+
+--Inspired from my previous work:
+local function EVENT_onModsLoaded()
+	modApi:addMissionStartHook(HOOK_onMissionStarted) --took that from my Terran mod. Seems to be modApi instead of modApiExt
+	modApi:addNextTurnHook(HOOK_onNextTurn)
+	modapiext:addSkillStartHook(HOOK_onSkillStarted)
+	modapiext:addFinalEffectStartHook(HOOK_onFinalEffectStarted)
+	modapiext:addPawnKilledHook(HOOK_onPawnKilled)
+end
+
+modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
+
+
+--Inspired from Tatu --->
+
+--[[
 
 -- Sub / Unsub to Events
-local function tatu_SquadEntered(squadId)
+local function truelch_SquadEntered(squadId)
 	if squadId == squad then
-		modapiext.events.onSkillStart:subscribe(tatu_skillStart)
-		modapiext.events.onPawnTracked:subscribe(tatu_pawnTracked)
-		modapiext.events.onFinalEffectStart:subscribe(tatu_finalEffectStart)
-		modapiext.events.onResetTurn:subscribe(tatu_resetTurn)
-		modApi.events.onNextTurn:subscribe(tatu_nextTurn)
-		modApi.events.onWindowShown:subscribe(tatu_onWindowShown)
-		-- Avatar tooltip
-		if not achievements.tatu_Avatar:isComplete() then
-			local textAvatar = "\n\nWater: $1\nFire: $2\nSmoke: $3\nA.C.I.D.: $4"
-			achievements.tatu_Avatar.tooltip = "Use the Razor Radula to pull enemies to water, fire, smoke and A.C.I.D. tiles in a single game."..textAvatar
-		end
+		
 	end
 end
 
-local function tatu_SquadExited(squadId)
+local function truelch_SquadExited(squadId)
 	if squadId == squad then
-		modapiext.events.onSkillStart:unsubscribe(tatu_skillStart)
-		modapiext.events.onPawnTracked:unsubscribe(tatu_pawnTracked)
-		modapiext.events.onFinalEffectStart:unsubscribe(tatu_finalEffectStart)
-		modapiext.events.onResetTurn:unsubscribe(tatu_resetTurn)
-		modApi.events.onNextTurn:unsubscribe(tatu_nextTurn)
-		modApi.events.onWindowShown:unsubscribe(tatu_onWindowShown)
-		-- Avatar and Spores tooltip
-		achievements.tatu_Spores.tooltip = "Have 4 Techno-Spores on the board at the same time."
-		achievements.tatu_Avatar.tooltip = "Use the Razor Radula to pull enemies to water, fire, smoke and A.C.I.D. tiles in a single game."
 	end
 end
 
-modApi.events.onSquadEnteredGame:subscribe(tatu_SquadEntered)
-modApi.events.onSquadExitedGame:subscribe(tatu_SquadExited)
-modApi.events.onPostStartGame:subscribe(tatu_GameStart)
+modApi.events.onSquadEnteredGame:subscribe(truelch_SquadEntered)
+modApi.events.onSquadExitedGame:subscribe(truelch_SquadExited)
+--modApi.events.onPostStartGame:subscribe(truelch_GameStart)
+
+]]
+
+-- <--- Inspired from my previous work

@@ -30,9 +30,9 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 
 ### v1.1.0
 Added achievements:
-- Highlander: ???
-- Vek Ball / King's Bouncer: throw X times enemies at boss / kill a boss by throwing things at it.
-- Scorpsome: kill 4 enemies in one single Scorpion's attack
+- There can be only one: Finish a game without letting a single Bouncer, Burrower or Scorpion escape (at least one of each must have been killed during your run)
+- Vek Ball: Throw an object 4 times at a Leader in a mission
+- Scorpsome: Kill 4 enemies in one single Scorpion's attack
 
 ### v1.0.3
 - Fixed issues with Bouncer's weapon:

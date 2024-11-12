@@ -1,19 +1,6 @@
 local mod = modApi:getCurrentMod()
 local squad = "truelch_Cyborg_Squad"
 
---[[
-Ideas:
-- Highlander / There can be only one:
-	- Bouncer (AE)
-	- Burrower (elite)
-	- Scorpion (standard)
-
-- King's Bouncer:
-- VekBall: launch Vek 4 times on a Leader in a single mission.
-- 
-- Skarner / Family Gathering: 
-]]
-
 -- --- CONSTANT VARIABLES --- --
 local SCORPSOME_KILL_GOAL = 4
 local VEK_BALL_GOAL = 4
@@ -22,19 +9,15 @@ local VEK_BALL_GOAL = 4
 local achievements = {
 	truelch_Highlander = modApi.achievements:add{
 		id = "truelch_Highlander",
-		name = "Highlander",
-		tooltip = "The Bouncer must kill at least 1 Bouncer, the the Scorpion 1 Scorpion and the Burrower 1 Burrower",
+		name = "There can be only one!", --"Highlander"
+		tooltip = "Finish a game without letting a single Bouncer, Burrower or Scorpion escape\n(at least one of each must have been killed during your run)",
 		image = mod.resourcePath.."img/achievements/truelch_Highlander.png",
 		squad = squad,
 	},
-	--truelch_KingBouncer = modApi.achievements:add{
 	truelch_VekBall = modApi.achievements:add{
-		--id = "truelch_KingBouncer",
-		--name = "King's Bouncer",
-		--tooltip = "Kill a boss by throwing something at it",
 		id = "truelch_VekBall",
 		name = "Vek Ball",
-		tooltip = "Throw "..tostring(VEK_BALL_GOAL).." times a Vek at a Leader in a mission",
+		tooltip = "Throw an object "..tostring(VEK_BALL_GOAL).." times at a Leader in a mission",
 		image = mod.resourcePath.."img/achievements/truelch_VekBall.png",
 		squad = squad,
 	},
@@ -48,9 +31,8 @@ local achievements = {
 }
 
 -- --- SOME VARS ---
---No need to store that in mission/game/achievent data since it's resolved "instantly"
+--No need to store that in mission/game/achievement data since it's resolved "instantly"
 local scorpsomeKillCount = 0
---local vekBallCount = 0
 
 -- --- HELPER FUNCTIONS ---
 local function isGame()
@@ -144,8 +126,25 @@ local function achievementData()
 	end
 
 	--Initializing other data here
+	--Set to false when a bouncer, burrower or scorpion is still alive when mission ends.
+	if game.truelch_Cyborg_Squad.achievementData.highlanderOk == nil then
+		game.truelch_Cyborg_Squad.achievementData.highlanderOk = true
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.bouncerOk == nil then
+		game.truelch_Cyborg_Squad.achievementData.bouncerOk = false
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.burrowerOk == nil then
+		game.truelch_Cyborg_Squad.achievementData.burrowerOk = false
+	end
+
+	if game.truelch_Cyborg_Squad.achievementData.scorpionOk == nil then
+		game.truelch_Cyborg_Squad.achievementData.scorpionOk = false
+	end
+
 	if game.truelch_Cyborg_Squad.achievementData.lastAttPawnType == nil then
-		game.truelch_Cyborg_Squad.achievementData.lastAttPawnType = "" --nil is not a good idea kappa
+		game.truelch_Cyborg_Squad.achievementData.lastAttPawnType = "" --nil is not a good idea lol
 	end
 
 	--Should be mission data
@@ -153,58 +152,6 @@ local function achievementData()
 		game.truelch_Cyborg_Squad.achievementData.vekBallCount = 0
 	end
 
-	--[[
-	if game.truelch_Cyborg_Squad.achievementData.bouncerKilled == nil then
-		game.truelch_Cyborg_Squad.achievementData.bouncerKilled = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.burrowerKilled == nil then
-		game.truelch_Cyborg_Squad.achievementData.burrowerKilled = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.scorpionKilled == nil then
-		game.truelch_Cyborg_Squad.achievementData.scorpionKilled = 0
-	end
-	]]
-
-	--Killed by Bouncer
-	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBouncer == nil then
-		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBouncer = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBouncer == nil then
-		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBouncer = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBouncer == nil then
-		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBouncer = 0
-	end
-
-	--Killed by Burrower
-	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBurrower == nil then
-		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByBurrower = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBurrower == nil then
-		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByBurrower = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBurrower == nil then
-		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByBurrower = 0
-	end
-
-	--Killed by Scorpion
-	if game.truelch_Cyborg_Squad.achievementData.bouncerKilledByScorpion == nil then
-		game.truelch_Cyborg_Squad.achievementData.bouncerKilledByScorpion = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.burrowerKilledByScorpion == nil then
-		game.truelch_Cyborg_Squad.achievementData.burrowerKilledByScorpion = 0
-	end
-
-	if game.truelch_Cyborg_Squad.achievementData.scorpionKilledByScorpion == nil then
-		game.truelch_Cyborg_Squad.achievementData.scorpionKilledByScorpion = 0
-	end
 
 	--Return
 	return game.truelch_Cyborg_Squad.achievementData
@@ -220,6 +167,10 @@ local bouncers =
 }
 
 function isBouncer(pawn)
+	if pawn == nil then
+		LOG("Pawn is nil!")
+		return false
+	end
 	local pawnType = pawn:GetType()
 	for _, elem in pairs(bouncers) do
 		if pawnType == elem then
@@ -237,6 +188,10 @@ local burrowers =
 }
 
 function isBurrower(pawn)
+	if pawn == nil then
+		LOG("Pawn is nil!")
+		return false
+	end
 	local pawnType = pawn:GetType()
 	for _, elem in pairs(burrowers) do
 		if pawnType == elem then
@@ -255,6 +210,10 @@ local scorpions =
 }
 
 function isScorpion(pawn)
+	if pawn == nil then
+		LOG("Pawn is nil!")
+		return false
+	end
 	local pawnType = pawn:GetType()
 	for _, elem in pairs(scorpions) do
 		if pawnType == elem then
@@ -265,18 +224,19 @@ function isScorpion(pawn)
 end
 
 --idk if I can access this: Tier = TIER_BOSS
+--Works assuming every boss has "Boss" inside its name!
+--[[
 function isBoss(pawn)
-	--[[
-	local find = string.find(pawn:GetType(), "Boss")
-	local cond = find ~= nil
-	LOG("isBoss("..pawn:GetType()..") -> find: "..tostring(find, "Boss").." -> cond: " .. tostring(cond))
-	return cond
-	]]
 	return string.find(pawn:GetType(), "Boss") ~= nil
+end
+]]
+
+--Tatu's approach, more reliable! (thx!!)
+function isBoss(pawn)
+    return _G[pawn:GetType()].Tier == TIER_BOSS
 end
 
 function isBouncerAttack(weaponId)
-	--LOG("isBouncerAttack(weaponId: "..weaponId..")")
 	return string.find(weaponId, "truelch_BouncerAttack") ~= nil
 end
 
@@ -288,14 +248,11 @@ achievements.truelch_Highlander.getTooltip = function(self)
 	local status = ""
 
 	--No need to check if we're in a mission
-	if isGame() then
-		--status = "\n\nBouncer(s) killed: " .. tostring(achievementData().bouncerKilled)
-		--status += "\nBurrower(s) killed: " .. tostring(achievementData().burrowerKilled)
-		--status += "\nScorpion(s) killed: " .. tostring(achievementData().scorpionKilled)
-		status = "\nKills (Bouncers / Burrowers / Scorpions):"
-		status = status.."\nBouncer: " ..tostring(achievementData().bouncerKilledByBouncer.. " / "..tostring(achievementData().burrowerKilledByBouncer.. " / "..tostring(achievementData().scorpionKilledByBouncer)))
-		status = status.."\nBurrower: "..tostring(achievementData().bouncerKilledByBurrower.." / "..tostring(achievementData().burrowerKilledByBurrower.." / "..tostring(achievementData().scorpionKilledByBurrower)))
-		status = status.."\nScorpion: "..tostring(achievementData().bouncerKilledByScorpion.." / "..tostring(achievementData().burrowerKilledByScorpion.." / "..tostring(achievementData().scorpionKilledByScorpion)))
+	if isGame() and not achievements.truelch_Highlander:isComplete() then
+		status = status.."\n\nNo Bouncer, Burrower or Scorpion left alive: "..tostring(achievementData().highlanderOk)
+		status = status.."\nBouncer validated: " ..tostring(achievementData().bouncerOk)
+		status = status.."\nBurrower validated: "..tostring(achievementData().burrowerOk)
+		status = status.."\nScorpion validated: "..tostring(achievementData().scorpionOk)
 	end
 
 	result = result .. status
@@ -310,7 +267,7 @@ achievements.truelch_VekBall.getTooltip = function(self)
 	local status = ""
 
 	--No need to check if we're in a mission
-	if isGame() and isMission() then
+	if isGame() and isMission() and not achievements.truelch_VekBall:isComplete() then
 		status = "\nObjects thrown at boss: "..tostring(achievementData().vekBallCount.." / "..tostring(VEK_BALL_GOAL))
 	end
 
@@ -322,7 +279,9 @@ end
 --- HOOKS ---
 local HOOK_onNextTurn = function(mission)
 	achievementData().lastAttPawnType = ""
+	--LOG("HOOK_onNextTurn -> lastAttPawnType: " .. achievementData().lastAttPawnType)
 end
+
 
 local HOOK_onSkillStarted = function(mission, pawn, weaponId, p1, p2)
 		local exit = false
@@ -333,26 +292,41 @@ local HOOK_onSkillStarted = function(mission, pawn, weaponId, p1, p2)
 			return
 		end
 
+		--LOG("HOOK_onSkillStarted")
+
 		if type(weaponId) == 'table' then
     		weaponId = weaponId.__Id
 		end
 
 		if weaponId ~= "Move" and weaponId ~= nil then
 			achievementData().lastAttPawnType = pawn:GetType()
+			--LOG(" ---> lastAttPawnType: " .. achievementData().lastAttPawnType)
+			if isScorpion(pawn) == false then
+				--This is what I forgot and was absolutely needed!
+				scorpsomeKillCount = 0
+			end
 		end
 end
 
-local HOOK_onFinalEffectStarted = function(mission, pawn, weaponId, p1, p2, p3)
-	--LOG(string.format("%s is using %s at %s and %s!", pawn:GetMechName(), weaponId, p2:GetString(), p3:GetString()))
 
+local HOOK_onFinalEffectStarted = function(mission, pawn, weaponId, p1, p2, p3)
 	--Also needed!
 	achievementData().lastAttPawnType = pawn:GetType()
 
+	--LOG("HOOK_onFinalEffectStarted ---> lastAttPawnType: " .. achievementData().lastAttPawnType)
+
 	--For King's Bouncer: throw stuff at boss
+	if type(weaponId) == 'table' then
+		weaponId = weaponId.__Id
+	end
+
+	if isScorpion(pawn) == false then
+		--Also doing this here
+		scorpsomeKillCount = 0
+	end
+
 	local pawn3 = Board:GetPawn(p3)
 	if pawn3 ~= nil and isBoss(pawn3) and isBouncerAttack(weaponId) then
-		--LOG("Here! (we threw stuff at a boss)")
-
 		--Vek Ball
 		achievementData().vekBallCount = achievementData().vekBallCount + 1
 
@@ -364,80 +338,43 @@ local HOOK_onFinalEffectStarted = function(mission, pawn, weaponId, p1, p2, p3)
 end
 
 
-
 local HOOK_onPawnKilled = function(mission, pawn)
 	if not isSquad() or not isMission() then return end
 
-	--LOG("HOOK_onPawnKilled - achievementData().lastAttPawnType: "..achievementData().lastAttPawnType)
+	--LOG("HOOK_onPawnKilled -> last attacker: " .. achievementData().lastAttPawnType)
 
 	--Scorpsome achievement
 	if achievementData().lastAttPawnType == "truelch_ScorpionMech" then
 		--Increment kill count (no need to store the value in mission data or game data or achievement data since it's resolved instantly)
 		scorpsomeKillCount = scorpsomeKillCount + 1
 
-		--LOG("scorpsomeKillCount: "..tostring(scorpsomeKillCount))
+		--LOG("[INCR] scorpsomeKillCount: " .. tostring(scorpsomeKillCount))
 
 		--Reached goal?
 		if scorpsomeKillCount >= SCORPSOME_KILL_GOAL then
 			completeScorpsome()
 		end
 	else
-		--Reset kill count
+		--Reset kill count		
 		scorpsomeKillCount = 0
+		--LOG("[RESET] scorpsomeKillCount: " .. tostring(scorpsomeKillCount))
 	end
 
-	--Highlander achievement	
+	--Highlander achievement
+	--Maybe I can at least keep that to detect if there was a Bouncer, Burrower and Scorpion during the run?
+	--Would be more efficient (and safer) than checking every turn all pawns.
 	if isBouncer(pawn) then
-		--Increment kill count
-
-		--achievementData.bouncerKilled = achievementData.bouncerKilled + 1
-
-		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
-			achievementData().bouncerKilledByBouncer = achievementData().bouncerKilledByBouncer + 1
-		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
-			achievementData().bouncerKilledByBurrower = achievementData().bouncerKilledByBurrower + 1
-		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
-			achievementData().bouncerKilledByScorpion = achievementData().bouncerKilledByScorpion + 1
-		end
-
-		--TODO: check that at the end of the run
-		--idk what i'm gonna do with it for now
-		--Check kill count
-		--[[
-		if achievementData.bouncerKilled >= VALKYRIES_GOAL then
-			completeRideOfTheValkyries()
-		end
-		]]
+		achievementData().bouncerOk = true
 	elseif isBurrower(pawn) then
-		--[[
-		achievementData.burrowerKilled = achievementData.burrowerKilled + 1
-		LOG("burrower(s) killed: " .. achievementData.burrowerKilled)
-		]]
-		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
-			achievementData().burrowerKilledByBouncer = achievementData().burrowerKilledByBouncer + 1
-		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
-			achievementData().burrowerKilledByBurrower = achievementData().burrowerKilledByBurrower + 1
-		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
-			achievementData().burrowerKilledByScorpion = achievementData().burrowerKilledByScorpion + 1
-		end
+		achievementData().burrowerOk = true
 	elseif isScorpion(pawn) then
-		--[[
-		achievementData.scorpionKilled = achievementData.scorpionKilled + 1
-		LOG("scorpion(s) killed: " .. achievementData.scorpionKilled)
-		]]
-		if achievementData().lastAttPawnType == "truelch_BouncerMech" then
-			achievementData().scorpionKilledByBouncer = achievementData().scorpionKilledByBouncer + 1
-		elseif achievementData().lastAttPawnType == "truelch_BurrowerMech" then
-			achievementData().scorpionKilledByBurrower = achievementData().scorpionKilledByBurrower + 1
-		elseif achievementData().lastAttPawnType == "truelch_ScorpionMech" then
-			achievementData().scorpionKilledByScorpion = achievementData().scorpionKilledByScorpion + 1
-		end
+		achievementData().scorpionOk = true
 	end
 end
 
 
 local HOOK_onMissionStarted = function(mission)
-	LOG("On Mission Started -> reset vek ball count")
+	--LOG("On Mission Started -> reset vek ball count")
 	if isMission() then --haven't checked if test mission would trigger that
 		--Reset vek ball
 		achievementData().vekBallCount = 0
@@ -445,9 +382,43 @@ local HOOK_onMissionStarted = function(mission)
 end
 
 
+local HOOK_onMissionEnded = function(mission)
+	--LOG("HOOK_onMissionEnded -> Remaining units:")
+	--TODO: check isSquad!
+	for j = 0, 7 do
+		for i = 0, 7 do		
+			local point = Point(i, j)
+			if Board:IsPawnSpace(point) then
+				local pawn = Board:GetPawn(point)
+				--LOG(" -> pawn: " .. pawn:GetType() .. " at: " .. pawn:GetSpace():GetString())
+				if isBouncer(pawn) or isBurrower(pawn) or isScorpion(pawn) then
+					achievementData().highlanderOk = false
+				end
+			end
+		end
+	end
+end
+
+-- --- EVENTS --- --
+modApi.events.onGameVictory:subscribe(function(difficulty, islandsSecured, squad_id)
+	local exit = false
+		or isSquad() == false
+		or achievementData().highlanderOk == false
+		or achievementData().bouncerOk == false
+		or achievementData().burrowerOk == false
+		or achievementData().scorpionOk == false
+
+	if exit then
+		return
+	end
+	
+	completeHighlander()
+end)
+
 --Inspired from my previous work:
 local function EVENT_onModsLoaded()
-	modApi:addMissionStartHook(HOOK_onMissionStarted) --took that from my Terran mod. Seems to be modApi instead of modApiExt
+	modApi:addMissionStartHook(HOOK_onMissionStarted)
+	modApi:addMissionEndHook(HOOK_onMissionEnded)
 	modApi:addNextTurnHook(HOOK_onNextTurn)
 	modapiext:addSkillStartHook(HOOK_onSkillStarted)
 	modapiext:addFinalEffectStartHook(HOOK_onFinalEffectStarted)
@@ -455,28 +426,3 @@ local function EVENT_onModsLoaded()
 end
 
 modApi.events.onModsLoaded:subscribe(EVENT_onModsLoaded)
-
-
---Inspired from Tatu --->
-
---[[
-
--- Sub / Unsub to Events
-local function truelch_SquadEntered(squadId)
-	if squadId == squad then
-		
-	end
-end
-
-local function truelch_SquadExited(squadId)
-	if squadId == squad then
-	end
-end
-
-modApi.events.onSquadEnteredGame:subscribe(truelch_SquadEntered)
-modApi.events.onSquadExitedGame:subscribe(truelch_SquadExited)
---modApi.events.onPostStartGame:subscribe(truelch_GameStart)
-
-]]
-
--- <--- Inspired from my previous work

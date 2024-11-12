@@ -20,7 +20,19 @@ function mod:init()
 	require(self.scriptPath.."assets")
 
 	--Misc
-	require(self.scriptPath .."achievements") --soon
+	require(self.scriptPath .."achievements")
+
+	-- FMW ----->
+	--modapi already defined
+	self.FMW_hotkeyConfigTitle = "Mode Selection Hotkey" -- title of hotkey config in mod config
+	self.FMW_hotkeyConfigDesc = "Hotkey used to open and close firing mode selection." -- description of hotkey config in mod config
+
+	--init FMW
+	require(self.scriptPath .. "fmw/FMW"):init()
+
+	--FMW weapons
+	--require(self.scriptPath .. "/weapons/bouncerFMW")
+	-- <----- FMW
 
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")
@@ -32,7 +44,6 @@ function mod:init()
 end
 
 function mod:load(options, version)
-	--require(self.scriptPath .."weaponPreview/api"):load() --old, taken from NN
 	modApi:addSquad(
 		{
 			id = "truelch_Cyborg_Squad",

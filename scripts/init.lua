@@ -31,7 +31,8 @@ function mod:init()
 	require(self.scriptPath .. "fmw/FMW"):init()
 
 	--FMW weapons
-	--require(self.scriptPath .. "/weapons/bouncerFMW")
+	require(self.scriptPath .. "/weapons/bouncerFMW")
+	require(self.scriptPath .. "/weapons/FMweapon_example")	
 	-- <----- FMW
 
 	--Weapons

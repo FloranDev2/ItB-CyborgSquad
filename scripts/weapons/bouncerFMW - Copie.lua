@@ -12,64 +12,6 @@ modApi:appendAsset("img/modes/icon_bouncer_sweep_mode.png", resources.."img/mode
 local tipIndex
 local selfDmgCond
 
--- --- NORMAL MODE --- --
---Single target push / throw
-truelch_BouncerMode1 = {
-	aFM_name = "Normal Mode",
-	aFM_desc = "Single target mode",
-	aFM_icon = "img/modes/icon_bouncer_normal_mode.png",
-	Sweep = false,
-}
-
-CreateClass(truelch_BouncerMode1)
-
--- --- SWEEP MODE --- --
--- AoE target push / throw
-truelch_BouncerMode2 = truelch_BouncerMode1:new{
-	aFM_name = "Napalm Shell",
-	aFM_desc = "Sweep that attacks 3 targes in front",
-	aFM_icon = "img/modes/icon_bouncer_sweep_mode.png",
-	Sweep = true, --test
-}
-
-truelch_BouncerFMW = aFM_WeaponTemplate:new{
-	--Infos and art
-	Name = "Cyborg Horn",
-	Description = "Throw a unit into another, each unit taking an amount of damage equal to the hit points of the other, and self-damage the Mech.\nIf there is no enemy in the destination, damage and push the target instead.\nPush the Mech backwards in any case.\nThrow range: 2.",
-	Class = "TechnoVek",
-	Icon = "weapons/truelch_bouncer_attack.png",
-	LaunchSound = "", --unnecessary
-	SoundBase = "/enemy/bouncer_1",
-
-	--Gameplay
-	Damage = 1, --if there's no pawn on the end tile
-	SelfDamage = 1,
-	Range = 2,
-
-	--Upgrades
-	Upgrades = 2,
-	UpgradeCost = { 2, 1 },
-
-	--TC
-    TwoClick = true,
-
-	--FMW
-	aFM_ModeList = { "truelch_BouncerMode1" }, --only the single target mode
-	aFM_ModeSwitchDesc = "Click to change attack mode.",
-
-	--TipImage
-	TipImage = {
-		Unit = Point(2, 3),
-		Enemy = Point(2, 2),
-		Enemy2 = Point(2, 0),
-		Enemy3 = Point(1, 2),
-		Target = Point(2, 2),
-		Building = Point(3, 2),
-		Second_Click = Point(2, 0),
-		CustomPawn = "truelch_BouncerMech",
-	}
-}
-
 -- --- FUNCTIONS --- --
 function truelch_BouncerFMW:HasSquadNetworkShield()
 	for i = 0, 2 do
@@ -124,7 +66,7 @@ Need to take account of:
 - ACID????
 ]]
 function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
-	LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
+	--LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
@@ -144,45 +86,45 @@ function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
 		end
 	end
 
-	LOG("(Effective health) -> dmg2: " .. tostring(dmg2) .. ", dmg3: " .. tostring(dmg3))
+	--LOG("(Effective health) -> dmg2: " .. tostring(dmg2) .. ", dmg3: " .. tostring(dmg3))
 
 	if pawn2 ~= nil and pawn3 ~= nil then
-		LOG("pawn2:IsCorpse(): " .. tostring(pawn2:IsCorpse()))
-		LOG("pawn3:IsCorpse(): " .. tostring(pawn3:IsCorpse()))
+		--LOG("pawn2:IsCorpse(): " .. tostring(pawn2:IsCorpse()))
+		--LOG("pawn3:IsCorpse(): " .. tostring(pawn3:IsCorpse()))
 		--Other verification here (with return)
 		if pawn2:IsCorpse() and pawn3:IsCorpse() then --Maybe unnecessary
-			LOG(" => Both are corpse so we won't throw and do the push behaviour instead -> nil")
+			--LOG(" => Both are corpse so we won't throw and do the push behaviour instead -> nil")
 			return nil
 		end
 
 		--We only check for p2 ofc
 		--Wait, it's not supposed to make attack against stable pawns impossible! 
 		if pawn2:IsGuarding() then
-			LOG(" => pawn2 is guarding -> nil")
+			--LOG(" => pawn2 is guarding -> nil")
 			return nil
 		end
 
 		selfDmgCond = true --THIS! DON'T FORGET ABOUT THIS!
 
 		if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
-			LOG(" => Here!! (squad has network shield and at least one of the pawns is a mech)")
+			--LOG(" => Here!! (squad has network shield and at least one of the pawns is a mech)")
 			if pawn2:IsMech() and pawn3:IsMech() then --really... I guess we should still do this...
-				LOG(" => Both pawns are mechs!")
+				--LOG(" => Both pawns are mechs!")
 				return nil
 			elseif pawn2:IsMech() then
-				LOG(" => pawn2 is the only mech")
+				--LOG(" => pawn2 is the only mech")
 				return dmg2
 			elseif pawn3:IsMech() then
-				LOG(" => pawn3 is the only mech")
+				--LOG(" => pawn3 is the only mech")
 				return dmg3
 			else
 				--LOG(" => Uhh wtf??") --Should NOT happen. Right?
 			end
 		elseif ((pawn2:IsCorpse() or self:IsKindaCorpse(pawn2)) and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
-			LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
+			--LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
 			return dmg2
 		elseif ((pawn3:IsCorpse() or self:IsKindaCorpse(pawn3)) and dmg2 < dmg3) then
-			LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
+			--LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif (pawn2:IsShield() or pawn2:IsFrozen()) and (pawn3:IsShield() or pawn3:IsFrozen()) then
 			--That can happen even with the compute before, because it happens simultaneously
@@ -194,22 +136,24 @@ function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
 		elseif pawn2:IsShield() or pawn2:IsFrozen() then
 			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
 			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
-			LOG(" => pawn2 is shield / frozen -> dmg3: " .. tostring(dmg3))
+			--LOG(" => pawn2 is shield / frozen -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif pawn3:IsShield() or pawn3:IsFrozen() then
 			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
 			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
-			LOG(" => pawn3 is shield / frozen -> dmg2: " .. tostring(dmg2))
+			--LOG(" => pawn3 is shield / frozen -> dmg2: " .. tostring(dmg2))
 			return dmg2
 		else
-			LOG(" => Regular -> math.min(dmg2, dmg3): " .. tostring(math.min(dmg2, dmg3)))
+			--LOG(" => Regular -> math.min(dmg2, dmg3): " .. tostring(math.min(dmg2, dmg3)))
 			return math.min(dmg2, dmg3)
 		end
 	else
-		LOG(" => nil")
+		--LOG(" => nil")
 		return nil
 	end
 end
+
+--truelch_BouncerFMW:IsTwoClickException(p1, p2) was here, but it's below
 
 function truelch_BouncerFMW:PushAttack(ret, customP2, dir)
 	local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
@@ -218,7 +162,7 @@ function truelch_BouncerFMW:PushAttack(ret, customP2, dir)
 	ret:AddDamage(spaceDamage)
 end
 
-function truelch_BouncerFMW:ThrowAttack(ret, customP2, customP3, dir, isDelay)
+function truelch_BouncerAttack:ThrowAttack(ret, customP2, customP3, dir, isDelay)
 	--LOG("TRUELCH ThrowAttack(customP2: " .. customP2:GetString() .. ", customP3: " .. customP2:GetString() .. ")")
 	--Bounce and burst
 	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
@@ -241,45 +185,33 @@ function truelch_BouncerFMW:ThrowAttack(ret, customP2, customP3, dir, isDelay)
 	ret:AddLeap(move, delay)
 end
 
-Weapon_Texts.truelch_BouncerFMW_Upgrade1 = "Sweeping horns"
-Weapon_Texts.truelch_BouncerFMW_Upgrade2 = "Reinforced carapace"
 
-truelch_BouncerFMW_A = truelch_BouncerFMW:new{
-	UpgradeDescription = "Can target any adjacent target.", --Maybe improve this description
-	aFM_ModeList = { "truelch_BouncerMode1", "truelch_BouncerMode2" }, --Replaces Sweep = true
+-- --- NORMAL MODE --- --
+--Single target push / throw
+truelch_BouncerMode1 = {
+	aFM_name = "Normal Mode",
+	aFM_desc = "Single target mode",
+	aFM_icon = "img/modes/icon_bouncer_normal_mode.png",
+	Sweep = false,
 }
 
-truelch_BouncerFMW_B = truelch_BouncerFMW:new{
-	UpgradeDescription = "The Mech doesn't take self-damage anymore.",
-	SelfDamage = 0,
-}
+CreateClass(truelch_BouncerMode1)
 
-truelch_BouncerFMW_AB = truelch_BouncerFMW:new{
-	aFM_ModeList = { "truelch_BouncerMode1", "truelch_BouncerMode2" }, --Replaces Sweep = true
-	SelfDamage = 0,
-}
-
-function truelch_BouncerFMW:GetTargetArea(point)
-	local ret = PointList()
+--[[
+function truelch_BouncerMode1:targeting(point)
+	local points = {}
 	for i = DIR_START, DIR_END do
 		local curr = point + DIR_VECTORS[i]
-		ret:push_back(curr)
-	end	
-	return ret
+		points[#points+1] = curr
+	end
+	return points
 end
 
-function truelch_BouncerFMW:GetSkillEffect(p1, p2)
-	local ret = SkillEffect()
-	local currentMode = self:FM_GetMode(p1)	
-	local sweep = currentMode.Sweep
-	LOG("truelch_BouncerFMW:GetSkillEffect - sweep: " .. tostring(sweep))
-
+function truelch_BouncerMode1:fire(p1, p2, ret, sweep)
+	--local ret = SkillEffect()
 	local direction = GetDirection(p2 - p1)
 
-	LOG("truelch_BouncerFMW - A")
-
 	if not self:IsEdge(p1, p2) then
-		LOG("truelch_BouncerFMW - A1")
 		local damage = SpaceDamage(p2, 0)
 
 		--TODO: preview sweep?
@@ -306,15 +238,12 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 		--But actually, we'd disable throw at the opposite condition: if all spaces are empty, we can't throw!
 		damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png" --TODO
 		ret:AddDamage(damage)
-		LOG("truelch_BouncerFMW - A2")
-	end
-	LOG("truelch_BouncerFMW - B")
+	end	
 
 	--"ELSE" (pawn at p2 can be stable) - or we are at and edge
 	self:PushAttack(ret, p2, direction) --A
-	LOG("truelch_BouncerFMW - C")
-	if self.Sweep then
-		LOG("truelch_BouncerFMW - C1")
+	--if self.Sweep then
+	if sweep then
 		--Offsets
 		local offset1 = DIR_VECTORS[(direction-1)%4] --B
 		local offset2 = DIR_VECTORS[(direction+1)%4] --C
@@ -326,10 +255,7 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 		--Push attack
 		self:PushAttack(ret, customP2B, direction) --B
 		self:PushAttack(ret, customP2C, direction) --C
-		LOG("truelch_BouncerFMW - C2")
 	end
-
-	LOG("truelch_BouncerFMW - D")
 
 	--Move backwards
 	local dirback = GetDirection(p1 - p2)
@@ -337,7 +263,298 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 	moveBack.sAnimation = "airpush_"..dirback
 	ret:AddDamage(moveBack)
 
-	LOG("truelch_BouncerFMW - E")
+	--return ret
+end
+
+function truelch_BouncerMode2:second_targeting(p1, p2)
+    --return Ranged_TC_BounceShot.GetSecondTargetArea(Ranged_TC_BounceShot, p1, p2)
+end
+
+function truelch_BouncerMode2:second_fire(p1, p2, p3, sweep)
+	--Vars init
+	selfDmgCond = false --THIS!
+
+	local ret = SkillEffect()
+	local dir = GetDirection(p2 - p1)
+	local dirback = GetDirection(p1 - p2)
+
+	--Offsets
+	local offset1 = DIR_VECTORS[(dir-1)%4] --B
+	local offset2 = DIR_VECTORS[(dir+1)%4] --C
+
+	--Adjacent to p2 (sweep)
+	local customP2B = p2 + offset1 --B
+	local customP2C = p2 + offset2 --C
+
+	--Adjacent to p3 (sweep)
+	local customP3B = p3 + offset1 --B
+	local customP3C = p3 + offset2 --C
+
+	--Damages for throw. If nil, the throw is not possible.
+	local dmgA = self:ComputeDamage(ret, p2, p3)
+
+	local dmgB = nil
+	if self.Sweep then
+		dmgB = self:ComputeDamage(ret, customP2B, customP3B)
+	end
+
+	local dmgC = nil
+	if self.Sweep then
+		dmgC = self:ComputeDamage(ret, customP2C, customP3C)
+	end
+
+	--LOG("dmgA: " .. tostring(dmgA))
+	--LOG("dmgB: " .. tostring(dmgB))
+	--LOG("dmgC: " .. tostring(dmgC))
+
+	--If I put the ice / shield stuff here, they'll take the wrong amount of dmg
+
+	--Pawns
+	local pawnA2 = Board:GetPawn(p2)
+	local pawnA3 = Board:GetPawn(p3)
+	local pawnB2 = Board:GetPawn(customP2B)
+	local pawnB3 = Board:GetPawn(customP3B)
+	local pawnC2 = Board:GetPawn(customP2C)
+	local pawnC3 = Board:GetPawn(customP3C)
+
+	--Delays
+	--We need to find the last delay (for example, C could be a regular push while A and B are throws)
+	--dmgA, B and C returned by ComputeDamage are nil if the attack should be a push (pawn2 or pawn3 don't exist (or both))
+	local delayA = false
+	local delayB = false
+	local delayC = false
+
+	if dmgA ~= nil then
+		delayA = true
+	end
+
+	if self.Sweep then
+		if dmgB ~= nil then
+			delayB = true
+		end
+
+		if dmgC ~= nil then
+			delayC = true
+		end
+	end
+
+	--Self damage and push back	
+	ret:AddBounce(p1, 3)
+	local selfDmg = 0
+	if selfDmgCond then
+		selfDmg = self.SelfDamage
+	end
+	local selfDamSD = SpaceDamage(p1, selfDmg, dirback)
+	selfDamSD.sAnimation = "airpush_"..dirback
+	ret:AddDamage(selfDamSD)
+
+	--Do all push attacks (when applicable)	
+	if dmgA == nil then
+		self:PushAttack(ret, p2, dir) --A
+	end
+	if self.Sweep then
+		if dmgB == nil then
+			self:PushAttack(ret, customP2B, dir) --B
+		end	
+		if dmgC == nil then
+			self:PushAttack(ret, customP2C, dir) --C
+		end
+	end
+
+	--Do all throw attacks (when applicable)
+	if dmgA ~= nil then
+		self:ThrowAttack(ret, p2, p3, dir, delayA) --A
+	end
+	if self.Sweep then
+		if dmgB ~= nil then
+			self:ThrowAttack(ret, customP2B, customP3B, dir, delayB) --B
+		end
+		if dmgC ~= nil then
+			self:ThrowAttack(ret, customP2C, customP3C, dir, delayC) --C
+		end
+	end
+
+	--I tried to disable shield and ice here, but it worked only on one pawn
+
+	--Final damages for throw attacks (after delay)
+	if dmgA ~= nil then
+		ret:AddDamage(SpaceDamage(p3, dmgA)) --A
+	end
+	if self.Sweep then
+		if dmgB ~= nil then
+			ret:AddDamage(SpaceDamage(customP3B, dmgB)) --B
+		end
+		if dmgC ~= nil then
+			ret:AddDamage(SpaceDamage(customP3C, dmgC)) --C
+		end
+	end
+
+	--Return
+	return ret
+end
+]]
+
+-- --- SWEEP MODE --- --
+-- AoE target push / throw
+truelch_BouncerMode2 = truelch_BouncerMode1:new{
+	aFM_name = "Napalm Shell",
+	aFM_desc = "Sweep that attacks 3 targes in front",
+	aFM_icon = "img/modes/icon_bouncer_sweep_mode.png",
+	Sweep = true, --test
+}
+
+--Same as mode1
+--[[
+function truelch_BouncerMode2:second_targeting(p1, p2)
+end
+
+function truelch_BouncerMode2:second_fire(p1, p2, p3)
+end
+]]
+
+truelch_BouncerFMW = aFM_WeaponTemplate:new{
+	--Infos and art
+	Name = "Cyborg Horn",
+	Description = "Throw a unit into another, each unit taking an amount of damage equal to the hit points of the other, and self-damage the Mech.\nIf there is no enemy in the destination, damage and push the target instead.\nPush the Mech backwards in any case.\nThrow range: 2.",
+	Class = "TechnoVek",
+	Icon = "weapons/truelch_bouncer_attack.png",
+	LaunchSound = "", --unnecessary
+	SoundBase = "/enemy/bouncer_1",
+
+	--Gameplay
+	Damage = 1, --if there's no pawn on the end tile
+	SelfDamage = 1,
+	Range = 2,
+
+	--Upgrades
+	Upgrades = 2,
+	UpgradeCost = { 2, 1 },
+
+	--TC
+    TwoClick = true,
+
+	--FMW
+	aFM_ModeList = { "truelch_BouncerMode1" }, --only the single target mode
+	aFM_ModeSwitchDesc = "Click to change attack mode.",
+
+	--TipImage
+	TipImage = {
+		Unit = Point(2, 3),
+		Enemy = Point(2, 2),
+		Enemy2 = Point(2, 0),
+		Enemy3 = Point(1, 2),
+		Target = Point(2, 2),
+		Building = Point(3, 2),
+		Second_Click = Point(2, 0),
+		CustomPawn = "truelch_BouncerMech",
+	}
+}
+
+Weapon_Texts.truelch_BouncerFMW_Upgrade1 = "Sweeping horns"
+Weapon_Texts.truelch_BouncerFMW_Upgrade2 = "Reinforced carapace"
+
+truelch_BouncerFMW_A = truelch_BouncerFMW:new{
+	UpgradeDescription = "Can target any adjacent target.", --Maybe improve this description
+	aFM_ModeList = { "truelch_BouncerMode1", "truelch_BouncerMode2" }, --Replaces Sweep = true
+}
+
+truelch_BouncerFMW_B = truelch_BouncerFMW:new{
+	UpgradeDescription = "The Mech doesn't take self-damage anymore.",
+	SelfDamage = 0,
+}
+
+truelch_BouncerFMW_AB = truelch_BouncerFMW:new{
+	aFM_ModeList = { "truelch_BouncerMode1", "truelch_BouncerMode2" }, --Replaces Sweep = true
+	SelfDamage = 0,
+}
+
+function truelch_BouncerFMW:GetTargetArea(point)
+	--[[
+	local pl = PointList()
+	local currentMode = _G[self:FM_GetMode(point)]
+    
+	if self:FM_CurrentModeReady(point) then 
+		local points = currentMode:targeting(point)
+		
+		for _, p in ipairs(points) do
+			pl:push_back(p)
+		end
+	end
+	 
+	return pl
+	]]
+
+	local ret = PointList()
+	for i = DIR_START, DIR_END do
+		local curr = point + DIR_VECTORS[i]
+		ret:push_back(curr)
+	end	
+	return ret
+end
+
+function truelch_BouncerFMW:GetSkillEffect(p1, p2)
+	local ret = SkillEffect()
+	local currentMode = self:FM_GetMode(p1)	
+	--[[
+	if self:FM_CurrentModeReady(p1) then 
+		_G[currentMode]:fire(p1, p2, ret)
+	end
+	]]
+	local sweep = currentMode.Sweep
+	LOG("truelch_BouncerFMW:GetSkillEffect - sweep: " .. tostring(sweep))
+
+	local direction = GetDirection(p2 - p1)
+
+	if not self:IsEdge(p1, p2) then
+		local damage = SpaceDamage(p2, 0)
+
+		--TODO: preview sweep?
+
+		if Board:IsPawnSpace(p2) and not Board:GetPawn(p2):IsGuarding() then
+			for i = 1, self.Range do
+				local curr = p2 + DIR_VECTORS[direction] * i
+				if Board:IsValid(curr) and Board:IsBlocked(curr, PATH_FLYER) then
+					local block_image = SpaceDamage(curr, 0)
+					block_image.sImageMark = "advanced/combat/icons/icon_throwblocked_glow.png" --TODO: we actually want to throw there
+					ret:AddDamage(block_image)
+				end
+			end
+		
+			local empty_spaces = self:GetSecondTargetArea(p1, p2)
+			if not empty_spaces:empty() then
+				damage.sImageMark = "advanced/combat/throw_"..direction..".png"
+				ret:AddMelee(p1, damage)
+				return ret
+			end
+		end
+
+		--With the old weapon, we arrive here if there are no empty spaces
+		--But actually, we'd disable throw at the opposite condition: if all spaces are empty, we can't throw!
+		damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png" --TODO
+		ret:AddDamage(damage)
+	end	
+
+	--"ELSE" (pawn at p2 can be stable) - or we are at and edge
+	self:PushAttack(ret, p2, direction) --A
+	if self.Sweep then
+		--Offsets
+		local offset1 = DIR_VECTORS[(direction-1)%4] --B
+		local offset2 = DIR_VECTORS[(direction+1)%4] --C
+
+		--Adjacent to p2 (sweep)
+		local customP2B = p2 + offset1 --B
+		local customP2C = p2 + offset2 --C
+
+		--Push attack
+		self:PushAttack(ret, customP2B, direction) --B
+		self:PushAttack(ret, customP2C, direction) --C
+	end
+
+	--Move backwards
+	local dirback = GetDirection(p1 - p2)
+	local moveBack = SpaceDamage(p1, 0, dirback)
+	moveBack.sAnimation = "airpush_"..dirback
+	ret:AddDamage(moveBack)
 
 	return ret
 end
@@ -347,6 +564,16 @@ function truelch_BouncerFMW:IsTwoClickException(p1, p2)
 end
 
 function truelch_BouncerFMW:GetSecondTargetArea(p1, p2)
+	--[[
+	local currentMode = _G[self:FM_GetMode(p1)]
+    local pl = PointList()
+    
+	if self:FM_CurrentModeReady(p1) and currentMode.aFM_twoClick then 
+		pl = currentMode:second_targeting(p1, p2)
+	end
+    
+    return pl
+    ]]
 	local ret = PointList()
 	local direction = GetDirection(p2 - p1)
 	
@@ -370,6 +597,12 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
     local ret = SkillEffect()
 	local currentMode = _G[self:FM_GetMode(p1)]
 	local sweep = currentMode.Sweep --this is the only thing I need actually lol
+	--[[
+	if self:FM_CurrentModeReady(p1) and currentMode.aFM_twoClick then 
+		ret = currentMode:second_fire(p1, p2, p3, sweep)  
+	end
+	]]
+
 	local dir = GetDirection(p2 - p1)
 	local dirback = GetDirection(p1 - p2)
 

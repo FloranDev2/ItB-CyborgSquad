@@ -37,14 +37,6 @@ truelch_BouncerAttack = Skill:new{
 		Target = Point(2, 2),
 		Building = Point(3, 2),
 		Second_Click = Point(2, 0),
-
-		--Enemy3 = Point(1, 3),
-		--Second_Origin = Point(2, 3),
-		--Second_Target = Point(1, 3),
-		--What's the second click for the second attack in the tip image? It doesn't exist... ugh
-
-		--Enemy_Damaged = Point(2, 2),
-
 		CustomPawn = "truelch_BouncerMech",
 	}
 }

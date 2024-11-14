@@ -32,12 +32,12 @@ function mod:init()
 
 	--FMW weapons
 	require(self.scriptPath .. "/weapons/bouncerFMW")
-	require(self.scriptPath .. "/weapons/FMweapon_example")	
+	--require(self.scriptPath .. "/weapons/FMweapon_example")	
 	-- <----- FMW
 
 	--Weapons
 	require(self.scriptPath.."/weapons/scorpion_attack")
-	require(self.scriptPath.."/weapons/bouncer_attack")
+	--require(self.scriptPath.."/weapons/bouncer_attack")
 	require(self.scriptPath.."/weapons/burrower_attack")
 
 	--Pawns
@@ -45,6 +45,8 @@ function mod:init()
 end
 
 function mod:load(options, version)
+	--FMW
+	require(self.scriptPath .. "fmw/FMW"):load()
 	modApi:addSquad(
 		{
 			id = "truelch_Cyborg_Squad",

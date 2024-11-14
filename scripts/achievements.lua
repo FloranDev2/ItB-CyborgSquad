@@ -284,32 +284,46 @@ end
 
 
 local HOOK_onSkillStarted = function(mission, pawn, weaponId, p1, p2)
-		local exit = false
-			or isSquad() == false
-			or isMission() == false
+	--add isGame()?
+	local exit = false
+		or isSquad() == false
+		or isMission() == false
 
-		if exit then
-			return
+	if exit then
+		return
+	end
+
+	--LOG("HOOK_onSkillStarted")
+
+	if type(weaponId) == 'table' then
+		weaponId = weaponId.__Id
+	end
+
+	if weaponId ~= "Move" and weaponId ~= nil then
+		achievementData().lastAttPawnType = pawn:GetType()
+		--LOG(" ---> lastAttPawnType: " .. achievementData().lastAttPawnType)
+		if isScorpion(pawn) == false then
+			--This is what I forgot and was absolutely needed!
+			scorpsomeKillCount = 0
 		end
-
-		--LOG("HOOK_onSkillStarted")
-
-		if type(weaponId) == 'table' then
-    		weaponId = weaponId.__Id
-		end
-
-		if weaponId ~= "Move" and weaponId ~= nil then
-			achievementData().lastAttPawnType = pawn:GetType()
-			--LOG(" ---> lastAttPawnType: " .. achievementData().lastAttPawnType)
-			if isScorpion(pawn) == false then
-				--This is what I forgot and was absolutely needed!
-				scorpsomeKillCount = 0
-			end
-		end
+	end
 end
 
 
 local HOOK_onFinalEffectStarted = function(mission, pawn, weaponId, p1, p2, p3)
+	--add isGame()?
+	--LOG("HOOK_onFinalEffectStarted - A")
+	local exit = false
+		or isSquad() == false
+		or isMission() == false
+
+	if exit then
+		--LOG("HOOK_onFinalEffectStarted ->return!!")
+		return
+	end
+
+	--LOG("HOOK_onFinalEffectStarted - B")
+
 	--Also needed!
 	achievementData().lastAttPawnType = pawn:GetType()
 

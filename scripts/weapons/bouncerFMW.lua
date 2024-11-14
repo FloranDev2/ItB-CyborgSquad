@@ -29,7 +29,7 @@ truelch_BouncerMode2 = truelch_BouncerMode1:new{
 	aFM_name = "Napalm Shell",
 	aFM_desc = "Sweep that attacks 3 targes in front",
 	aFM_icon = "img/modes/icon_bouncer_sweep_mode.png",
-	Sweep = true, --test
+	Sweep = true,
 }
 
 truelch_BouncerFMW = aFM_WeaponTemplate:new{
@@ -71,7 +71,8 @@ truelch_BouncerFMW = aFM_WeaponTemplate:new{
 }
 
 -- --- FUNCTIONS --- --
-function truelch_BouncerFMW:HasSquadNetworkShield()
+--function truelch_BouncerFMW:HasSquadNetworkShield()
+local function HasSquadNetworkShield()
 	for i = 0, 2 do
 		local mech = Board:GetPawn(i)
 		if mech ~= nil then --shouldn't be necessary, but we never know...
@@ -87,7 +88,7 @@ function truelch_BouncerFMW:HasSquadNetworkShield()
 	return false
 end
 
-function truelch_BouncerFMW:IsEdge(p1, p2)
+local function IsEdge(p1, p2)
 	local direction = GetDirection(p2 - p1)
 	local testP = p2 + DIR_VECTORS[direction]
 	return not Board:IsValid(testP)
@@ -99,7 +100,7 @@ local kindaCorpses =
 	"lmn_SequoiaBoss2"
 }
 
-function truelch_BouncerFMW:IsKindaCorpse(pawn)
+local function IsKindaCorpse(pawn)	
 	local pawnType = pawn:GetType()
 	for _, elem in pairs(kindaCorpses) do
 		if pawnType == elem then
@@ -123,12 +124,14 @@ Need to take account of:
   -> Disable throwing a Mech or any pawn that leaves a corpse I guess
 - ACID????
 ]]
-function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
-	LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
+--function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
+local function ComputeDamage(ret, customP2, customP3, damage)	
+	--LOG("ComputeDamage(customP2:" .. customP2:GetString() .. ", customP3: " .. customP3:GetString() .. ")")
 	local pawn2 = Board:GetPawn(customP2)
 	local pawn3 = Board:GetPawn(customP3)
 
-	local dmg2 = self.Damage
+	--local dmg2 = self.Damage
+	local dmg2 = damage
 	if pawn3 ~= nil then
 		dmg2 = pawn3:GetHealth()
 		if pawn3:IsArmor() then
@@ -136,7 +139,8 @@ function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
 		end
 	end
 
-	local dmg3 = self.Damage
+	--local dmg3 = self.Damage
+	local dmg3 = damage
 	if pawn2 ~= nil then
 		dmg3 = pawn2:GetHealth()
 		if pawn2:IsArmor() then
@@ -144,45 +148,48 @@ function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
 		end
 	end
 
-	LOG("(Effective health) -> dmg2: " .. tostring(dmg2) .. ", dmg3: " .. tostring(dmg3))
+	--LOG("(Effective health) -> dmg2: " .. tostring(dmg2) .. ", dmg3: " .. tostring(dmg3))
 
 	if pawn2 ~= nil and pawn3 ~= nil then
-		LOG("pawn2:IsCorpse(): " .. tostring(pawn2:IsCorpse()))
-		LOG("pawn3:IsCorpse(): " .. tostring(pawn3:IsCorpse()))
+		--LOG("pawn2:IsCorpse(): " .. tostring(pawn2:IsCorpse()))
+		--LOG("pawn3:IsCorpse(): " .. tostring(pawn3:IsCorpse()))
 		--Other verification here (with return)
 		if pawn2:IsCorpse() and pawn3:IsCorpse() then --Maybe unnecessary
-			LOG(" => Both are corpse so we won't throw and do the push behaviour instead -> nil")
+			--LOG(" => Both are corpse so we won't throw and do the push behaviour instead -> nil")
 			return nil
 		end
 
 		--We only check for p2 ofc
 		--Wait, it's not supposed to make attack against stable pawns impossible! 
 		if pawn2:IsGuarding() then
-			LOG(" => pawn2 is guarding -> nil")
+			--LOG(" => pawn2 is guarding -> nil")
 			return nil
 		end
 
 		selfDmgCond = true --THIS! DON'T FORGET ABOUT THIS!
 
-		if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
-			LOG(" => Here!! (squad has network shield and at least one of the pawns is a mech)")
+		--if truelch_BouncerAttack:HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
+		if HasSquadNetworkShield() and (pawn2:IsMech() or pawn3:IsMech()) then
+			--LOG(" => Here!! (squad has network shield and at least one of the pawns is a mech)")
 			if pawn2:IsMech() and pawn3:IsMech() then --really... I guess we should still do this...
-				LOG(" => Both pawns are mechs!")
+				--LOG(" => Both pawns are mechs!")
 				return nil
 			elseif pawn2:IsMech() then
-				LOG(" => pawn2 is the only mech")
+				--LOG(" => pawn2 is the only mech")
 				return dmg2
 			elseif pawn3:IsMech() then
-				LOG(" => pawn3 is the only mech")
+				--LOG(" => pawn3 is the only mech")
 				return dmg3
 			else
 				--LOG(" => Uhh wtf??") --Should NOT happen. Right?
 			end
-		elseif ((pawn2:IsCorpse() or self:IsKindaCorpse(pawn2)) and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
-			LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
+		--elseif ((pawn2:IsCorpse() or self:IsKindaCorpse(pawn2)) and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
+		elseif ((pawn2:IsCorpse() or IsKindaCorpse(pawn2)) and dmg3 < dmg2) then --the case where they are BOTH corpses is already treated above
+			--LOG(" => only pawn2 is corpse -> dmg2: " .. tostring(dmg2))
 			return dmg2
-		elseif ((pawn3:IsCorpse() or self:IsKindaCorpse(pawn3)) and dmg2 < dmg3) then
-			LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
+		--elseif ((pawn3:IsCorpse() or self:IsKindaCorpse(pawn3)) and dmg2 < dmg3) then
+		elseif ((pawn3:IsCorpse() or IsKindaCorpse(pawn3)) and dmg2 < dmg3) then
+			--LOG(" => only pawn3 is corpse -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif (pawn2:IsShield() or pawn2:IsFrozen()) and (pawn3:IsShield() or pawn3:IsFrozen()) then
 			--That can happen even with the compute before, because it happens simultaneously
@@ -194,19 +201,19 @@ function truelch_BouncerFMW:ComputeDamage(ret, customP2, customP3)
 		elseif pawn2:IsShield() or pawn2:IsFrozen() then
 			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetShield(false)")
 			ret:AddScript("Board:GetPawn("..customP2:GetString().."):SetFrozen(false)")
-			LOG(" => pawn2 is shield / frozen -> dmg3: " .. tostring(dmg3))
+			--LOG(" => pawn2 is shield / frozen -> dmg3: " .. tostring(dmg3))
 			return dmg3
 		elseif pawn3:IsShield() or pawn3:IsFrozen() then
 			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetShield(false)")
 			ret:AddScript("Board:GetPawn("..customP3:GetString().."):SetFrozen(false)")
-			LOG(" => pawn3 is shield / frozen -> dmg2: " .. tostring(dmg2))
+			--LOG(" => pawn3 is shield / frozen -> dmg2: " .. tostring(dmg2))
 			return dmg2
 		else
-			LOG(" => Regular -> math.min(dmg2, dmg3): " .. tostring(math.min(dmg2, dmg3)))
+			--LOG(" => Regular -> math.min(dmg2, dmg3): " .. tostring(math.min(dmg2, dmg3)))
 			return math.min(dmg2, dmg3)
 		end
 	else
-		LOG(" => nil")
+		--LOG(" => nil")
 		return nil
 	end
 end
@@ -219,7 +226,6 @@ function truelch_BouncerFMW:PushAttack(ret, customP2, dir)
 end
 
 function truelch_BouncerFMW:ThrowAttack(ret, customP2, customP3, dir, isDelay)
-	--LOG("TRUELCH ThrowAttack(customP2: " .. customP2:GetString() .. ", customP3: " .. customP2:GetString() .. ")")
 	--Bounce and burst
 	ret:AddBurst(customP3, "Emitter_Crack_Start2", DIR_NONE)
 	ret:AddBounce(customP3, 4)
@@ -270,16 +276,13 @@ end
 
 function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 	local ret = SkillEffect()
-	local currentMode = self:FM_GetMode(p1)	
-	local sweep = currentMode.Sweep
-	LOG("truelch_BouncerFMW:GetSkillEffect - sweep: " .. tostring(sweep))
+	
+	local currentMode = _G[self:FM_GetMode(p1)] --local currentMode = self:FM_GetMode(p1)
+	local sweep = currentMode.Sweep --this is the only thing I need actually lol
 
 	local direction = GetDirection(p2 - p1)
 
-	LOG("truelch_BouncerFMW - A")
-
-	if not self:IsEdge(p1, p2) then
-		LOG("truelch_BouncerFMW - A1")
+	if not IsEdge(p1, p2) then
 		local damage = SpaceDamage(p2, 0)
 
 		--TODO: preview sweep?
@@ -306,15 +309,12 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 		--But actually, we'd disable throw at the opposite condition: if all spaces are empty, we can't throw!
 		damage.sImageMark = "advanced/combat/throw_"..direction.."_off.png" --TODO
 		ret:AddDamage(damage)
-		LOG("truelch_BouncerFMW - A2")
 	end
-	LOG("truelch_BouncerFMW - B")
 
 	--"ELSE" (pawn at p2 can be stable) - or we are at and edge
 	self:PushAttack(ret, p2, direction) --A
-	LOG("truelch_BouncerFMW - C")
-	if self.Sweep then
-		LOG("truelch_BouncerFMW - C1")
+	--if self.Sweep then
+	if sweep then
 		--Offsets
 		local offset1 = DIR_VECTORS[(direction-1)%4] --B
 		local offset2 = DIR_VECTORS[(direction+1)%4] --C
@@ -326,10 +326,7 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 		--Push attack
 		self:PushAttack(ret, customP2B, direction) --B
 		self:PushAttack(ret, customP2C, direction) --C
-		LOG("truelch_BouncerFMW - C2")
 	end
-
-	LOG("truelch_BouncerFMW - D")
 
 	--Move backwards
 	local dirback = GetDirection(p1 - p2)
@@ -337,13 +334,12 @@ function truelch_BouncerFMW:GetSkillEffect(p1, p2)
 	moveBack.sAnimation = "airpush_"..dirback
 	ret:AddDamage(moveBack)
 
-	LOG("truelch_BouncerFMW - E")
-
 	return ret
 end
 
 function truelch_BouncerFMW:IsTwoClickException(p1, p2)
-	return self:IsEdge(p1, p2) or (Board:IsPawnSpace(p2) and Board:GetPawn(p2):IsGuarding())
+	--return self:IsEdge(p1, p2) or (Board:IsPawnSpace(p2) and Board:GetPawn(p2):IsGuarding())
+	return IsEdge(p1, p2) or (Board:IsPawnSpace(p2) and Board:GetPawn(p2):IsGuarding())
 end
 
 function truelch_BouncerFMW:GetSecondTargetArea(p1, p2)
@@ -368,8 +364,11 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 	--Vars init
 	selfDmgCond = false --THIS!
     local ret = SkillEffect()
+
 	local currentMode = _G[self:FM_GetMode(p1)]
 	local sweep = currentMode.Sweep --this is the only thing I need actually lol
+	--LOG("GetFinalEffect - sweep: " .. tostring(sweep))
+
 	local dir = GetDirection(p2 - p1)
 	local dirback = GetDirection(p1 - p2)
 
@@ -386,16 +385,16 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 	local customP3C = p3 + offset2 --C
 
 	--Damages for throw. If nil, the throw is not possible.
-	local dmgA = self:ComputeDamage(ret, p2, p3)
+	local dmgA = ComputeDamage(ret, p2, p3, self.Damage)
 
 	local dmgB = nil
-	if self.Sweep then
-		dmgB = self:ComputeDamage(ret, customP2B, customP3B)
+	if sweep then
+		dmgB = ComputeDamage(ret, customP2B, customP3B, self.Damage)
 	end
 
 	local dmgC = nil
-	if self.Sweep then
-		dmgC = self:ComputeDamage(ret, customP2C, customP3C)
+	if sweep then
+		dmgC = ComputeDamage(ret, customP2C, customP3C, self.Damage)
 	end
 
 	--LOG("dmgA: " .. tostring(dmgA))
@@ -423,7 +422,7 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 		delayA = true
 	end
 
-	if self.Sweep then
+	if sweep then		
 		if dmgB ~= nil then
 			delayB = true
 		end
@@ -447,7 +446,8 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 	if dmgA == nil then
 		self:PushAttack(ret, p2, dir) --A
 	end
-	if self.Sweep then
+	--if self.Sweep then
+	if sweep then
 		if dmgB == nil then
 			self:PushAttack(ret, customP2B, dir) --B
 		end	
@@ -460,7 +460,7 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 	if dmgA ~= nil then
 		self:ThrowAttack(ret, p2, p3, dir, delayA) --A
 	end
-	if self.Sweep then
+	if sweep then
 		if dmgB ~= nil then
 			self:ThrowAttack(ret, customP2B, customP3B, dir, delayB) --B
 		end
@@ -475,7 +475,7 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 	if dmgA ~= nil then
 		ret:AddDamage(SpaceDamage(p3, dmgA)) --A
 	end
-	if self.Sweep then
+	if sweep then
 		if dmgB ~= nil then
 			ret:AddDamage(SpaceDamage(customP3B, dmgB)) --B
 		end

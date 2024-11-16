@@ -222,7 +222,9 @@ function truelch_BouncerFMW:PushAttack(ret, customP2, dir)
 	local spaceDamage = SpaceDamage(customP2, self.Damage, dir)
 	spaceDamage.sAnimation = "SwipeClaw2"
 	spaceDamage.sSound = self.SoundBase.."/attack"
+
 	ret:AddDamage(spaceDamage)
+	--ret:AddDamage(spaceDamage, NO_DELAY)
 end
 
 function truelch_BouncerFMW:ThrowAttack(ret, customP2, customP3, dir, isDelay)
@@ -233,18 +235,25 @@ function truelch_BouncerFMW:ThrowAttack(ret, customP2, customP3, dir, isDelay)
 	--Throw effect
 	local throwEffect = SpaceDamage(customP2, 0)
 	throwEffect.sImageMark = "advanced/combat/throw_"..dir..".png"
+
 	ret:AddDamage(throwEffect)
+	--ret:AddDamage(throwEffect)
+
 	ret:AddBounce(customP2, -4)
 
 	--Leap
 	local move = PointList()
 	move:push_back(customP2)
 	move:push_back(customP3)
+	--[[
 	local delay = NO_DELAY
 	if isDelay then
 		delay = FULL_DELAY
 	end
 	ret:AddLeap(move, delay)
+	]]
+	ret:AddLeap(move, NO_DELAY)
+	--Test
 end
 
 Weapon_Texts.truelch_BouncerFMW_Upgrade1 = "Sweeping horns"
@@ -468,6 +477,7 @@ function truelch_BouncerFMW:GetFinalEffect(p1, p2, p3)
 			self:ThrowAttack(ret, customP2C, customP3C, dir, delayC) --C
 		end
 	end
+
 
 	--I tried to disable shield and ice here, but it worked only on one pawn
 

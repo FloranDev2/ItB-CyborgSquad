@@ -20,6 +20,11 @@ end
 
 --Is the Burrower weapon with crack upgrade powered
 local function isCrack(pawn)
+	LOG("isCrack...")
+	if pawn == nil then
+		LOG(" ... pawn is nil!")
+		return false
+	end
 	local isCrack = false
     local weapons = pawn:GetPoweredWeapons()
 
@@ -309,13 +314,6 @@ end
 
 function truelch_BurrowerAttack:GetSkillEffect(p1, p2)
 	local ret = SkillEffect()
-
-	--LOG("TRUELCH --- terrain at: " .. p2:GetString() .. " is: " .. tostring(Board:GetTerrain(p2)))
-	--LOG("TRUELCH --- is craked? -> " .. tostring(Board:IsCracked(p2)))	
-	--https://github.com/itb-community/ITB-ModLoader/wiki/%5BVanilla%5D-Board#IsCracked
-
-	--Test before writting stuff on the wiki
-	--Board:SetHealth(p2, 1, 4)
 
 	if Board:IsBuilding(p2) then
 		self:BuildingEffect(ret, p2)

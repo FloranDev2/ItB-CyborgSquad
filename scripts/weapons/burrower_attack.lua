@@ -20,9 +20,9 @@ end
 
 --Is the Burrower weapon with crack upgrade powered
 local function isCrack(pawn)
-	LOG("isCrack...")
+	--LOG("isCrack...")
 	if pawn == nil then
-		LOG(" ... pawn is nil!")
+		--LOG(" ... pawn is nil!")
 		return false
 	end
 	local isCrack = false

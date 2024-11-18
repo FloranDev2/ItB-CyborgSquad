@@ -28,6 +28,12 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 
 ## Versions
 
+### v1.1.1
+- Bouncer's weapon improved:
+  - When the sweep upgrade is enabled, the player has now the choice to use it or the regular single target mode
+  - Fixed the delays between different throws; they should all happen at the same time (along with pushes too)
+- Fixed an issue with a Burrower's function (to detect if crack upgrade is enabled) which would cause an error with some other mods (due to nil pawn being passed)
+
 ### v1.1.0
 Added achievements:
 - There can be only one: Finish a game without letting a single Bouncer, Burrower or Scorpion escape (at least one of each must have been killed during your run)

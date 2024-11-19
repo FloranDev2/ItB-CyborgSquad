@@ -20,7 +20,7 @@ function mod:init()
 	require(self.scriptPath.."assets")
 
 	--Misc
-	require(self.scriptPath .."achievements")
+	require(self.scriptPath.."achievements")
 
 	-- FMW ----->
 	--modapi already defined
@@ -28,10 +28,10 @@ function mod:init()
 	self.FMW_hotkeyConfigDesc = "Hotkey used to open and close firing mode selection." -- description of hotkey config in mod config
 
 	--init FMW
-	require(self.scriptPath .. "fmw/FMW"):init()
+	require(self.scriptPath.."fmw/FMW"):init()
 
 	--FMW weapons
-	require(self.scriptPath .. "/weapons/bouncerFMW")
+	require(self.scriptPath.."/weapons/bouncerFMW")
 	-- <----- FMW
 
 	--Weapons
@@ -40,12 +40,12 @@ function mod:init()
 	require(self.scriptPath.."/weapons/burrower_attack")
 
 	--Pawns
-	require(self.scriptPath .."pawns")
+	require(self.scriptPath.."pawns")
 end
 
 function mod:load(options, version)
 	--FMW
-	require(self.scriptPath .. "fmw/FMW"):load()
+	require(self.scriptPath.."fmw/FMW"):load()
 	modApi:addSquad(
 		{
 			id = "truelch_Cyborg_Squad",
@@ -56,7 +56,7 @@ function mod:load(options, version)
 		},
 		"Truelch's Cyborg Squad",
 		"Ah yes, more Cyborgs. Go BRRRT.",
-		self.resourcePath .."img/icon.png"
+		self.resourcePath.."img/icon.png"
 	)
 end
 

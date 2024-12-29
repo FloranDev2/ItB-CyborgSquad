@@ -26,7 +26,7 @@ CreateClass(truelch_BouncerMode1)
 -- --- SWEEP MODE --- --
 -- AoE target push / throw
 truelch_BouncerMode2 = truelch_BouncerMode1:new{
-	aFM_name = "Napalm Shell",
+	aFM_name = "Sweep Mode",
 	aFM_desc = "Sweep that attacks 3 targes in front",
 	aFM_icon = "img/modes/icon_bouncer_sweep_mode.png",
 	Sweep = true,

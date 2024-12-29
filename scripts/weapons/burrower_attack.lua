@@ -106,8 +106,31 @@ local HOOK_onPawnUndoMove = function(mission, pawn, undonePosition)
 		--LOG("TRUELCH --- i: " .. tostring(i))
 		--LOG("TRUELCH --- burrowerCrack: " .. tostring(missionData().burrowerCrack[i]))
 		--Board:GetPawn(i) == pawn doesn't work, so let's compare with the unique ids
-		if Board:GetPawn(i):GetId() == pawn:GetId() and missionData().burrowerCrack[i] == true then
-			--LOG("TRUELCH --- ---> isOk!")
+
+		--Had a nil error with the big if below (when playing my new mod)
+		-- --->
+		if Board:GetPawn(i) == nil then
+			LOG("Board:GetPawn(i) -----------> nil")
+		end
+		if pawn == nil then
+			LOG("pawn -----------> nil")
+		end
+		if missionData() == nil then
+			LOG("missionData() -----------> nil")
+		elseif missionData().burrowerCrack == nil then
+			LOG("missionData().burrowerCrack -----------> nil")
+		elseif missionData().burrowerCrack[i] == nil then
+			LOG("missionData().burrowerCrack[i] -----------> nil")
+		end
+		-- <---
+
+		if Board:GetPawn(i) ~= nil and
+			pawn ~= nil and
+			missionData() ~= nil and
+			missionData().burrowerCrack ~= nil and
+			missionData().burrowerCrack[i] ~= nil and
+			Board:GetPawn(i):GetId() == pawn:GetId() and
+			missionData().burrowerCrack[i] == true then
 			isOk = true
 		end
 	end

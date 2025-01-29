@@ -1,4 +1,4 @@
-# Truelch's Cyborg Squad (v1.1.0)
+# Truelch's Cyborg Squad (v1.1.2)
 
 I'm finally releasing this squad, that was supposed to bring me back to modding some months (years?) ago.
 All feedback is welcome, especially to squish these pesky Vek, I mean bugs!
@@ -27,6 +27,10 @@ Due to its nature, the Burrower can withstand pushing attacks without moving (wh
 - Improve readibility of Scorpion's attack by displaying the current path (QoL improvement)
 
 ## Versions
+
+### v1.1.2
+- Fixed bouncer second fire mode name
+- Burrower's weapon improved checks
 
 ### v1.1.1
 - Bouncer's weapon improved:
